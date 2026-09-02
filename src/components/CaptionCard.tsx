@@ -45,7 +45,6 @@ export function CaptionCard({ caption, index }: CaptionCardProps) {
       }`}
     >
       <div className="flex items-start gap-2">
-        {/* Drag handle */}
         <button
           {...attributes}
           {...listeners}
@@ -54,7 +53,6 @@ export function CaptionCard({ caption, index }: CaptionCardProps) {
           <GripVertical size={14} />
         </button>
 
-        {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1.5">
             <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-gray-200 text-gray-500">
@@ -69,25 +67,24 @@ export function CaptionCard({ caption, index }: CaptionCardProps) {
             >
               {caption.language === 'sk' ? 'SK' : 'EN'}
             </span>
-            <span className="text-base">{caption.icon}</span>
           </div>
 
-          <p className="text-gray-700 text-sm leading-relaxed mb-2 line-clamp-2">
-            {caption.content}
+          <p className="text-gray-700 text-sm leading-relaxed">
+            {caption.content} {caption.icon}
           </p>
 
-          {/* Hashtags + Copy */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex flex-wrap gap-1">
-              {caption.hashtags.slice(0, 4).map((tag, i) => (
-                <span key={i} className="text-xs text-gray-400">
-                  {tag}
-                </span>
-              ))}
-            </div>
+          <div className="flex flex-wrap gap-1 mt-1.5">
+            {caption.hashtags.slice(0, 4).map((tag, i) => (
+              <span key={i} className="text-xs text-gray-400">
+                {tag}
+              </span>
+            ))}
+          </div>
+
+          <div className="flex justify-end mt-2">
             <button
               onClick={handleCopy}
-              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-all shrink-0 ${
+              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-all ${
                 isCopied
                   ? 'bg-green-500 text-white'
                   : 'bg-white text-gray-600 hover:bg-gray-200'

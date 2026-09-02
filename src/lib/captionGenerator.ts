@@ -38,15 +38,30 @@ function generateHashtags(category: Category, language: Language, seed: number):
   return shuffled.slice(0, 5);
 }
 
-// Icon mapping cho mỗi category
-function getCategoryIcon(category: Category, isSK: boolean): string {
-  const icons: Record<Category, { sk: string; en: string }> = {
-    nails: { sk: '💅', en: '💅' },
-    hair: { sk: '✂️', en: '💇‍♀️' },
-    restaurant: { sk: '🍽️', en: '🍽️' },
-    eyelash: { sk: '👁️', en: '✨' },
+// Icon mapping cho mỗi category - nhiều icon ngẫu nhiên
+function getCategoryIcon(category: Category, isSK: boolean, seed: number): string {
+  const iconSets: Record<Category, { sk: string[]; en: string[] }> = {
+    nails: {
+      sk: ['💅', '✨', '💅🏻', '💅🏿', '💅🏾', '💖', '🌸', '💕', '💗', '💓', '🤍', '🩷', '💜', '🩵', '🤍'],
+      en: ['💅', '✨', '💅🏻', '💅🏿', '💅🏾', '💖', '🌸', '💕', '💗', '💓', '🤍', '🩷', '💜', '🩵', '🤍', '💐', '🌷', '💐'],
+    },
+    hair: {
+      sk: ['💇‍♀️', '💇', '✨', '😍', '💕', '🌸', '💖', '💗', '💓', '🩷', '💜', '🩵', '🤍', '💫', '✨'],
+      en: ['💇‍♀️', '💇', '✨', '😍', '💕', '🌸', '💖', '💗', '💓', '🩷', '💜', '🩵', '🤍', '💫', '✨', '👩‍🦰', '👩‍🦱'],
+    },
+    restaurant: {
+      sk: ['🍽️', '🍴', '😋', '🤤', '🍕', '🍔', '🍜', '🍝', '🍣', '🥗', '🍲', '🍛', '🥘', '🍱', '🫕'],
+      en: ['🍽️', '🍴', '😋', '🤤', '🍕', '🍔', '🍜', '🍝', '🍣', '🥗', '🍲', '🍛', '🥘', '🍱', '🫕', '🍰', '🧁'],
+    },
+    eyelash: {
+      sk: ['👁️', '✨', '💅', '😍', '💕', '🌸', '💖', '💗', '💓', '🩷', '💜', '🩵', '🤍', '💫', '✨'],
+      en: ['👁️', '✨', '💅', '😍', '💕', '🌸', '💖', '💗', '💓', '🩷', '💜', '🩵', '🤍', '💫', '✨', '🦋', '🌟'],
+    },
   };
-  return isSK ? icons[category].sk : icons[category].en;
+
+  const icons = isSK ? iconSets[category].sk : iconSets[category].en;
+  const index = seed % icons.length;
+  return icons[index];
 }
 
 // Sinh tất cả captions cho một ngày với trending topics
@@ -91,7 +106,7 @@ export function generateDailyCaptions(trending: Record<Category, string[]> | nul
         category,
         language: 'sk',
         content: finalContent,
-        icon: getCategoryIcon(category, true),
+        icon: getCategoryIcon(category, true, hashString(`${id}-sk`)),
         hashtags: generateHashtags(category, 'sk', hashtagSeed),
         createdAt: today,
       });
@@ -112,7 +127,7 @@ export function generateDailyCaptions(trending: Record<Category, string[]> | nul
         category,
         language: 'en',
         content: finalContent,
-        icon: getCategoryIcon(category, false),
+        icon: getCategoryIcon(category, false, hashString(`${id}-en`)),
         hashtags: generateHashtags(category, 'en', hashtagSeed),
         createdAt: today,
       });
@@ -145,7 +160,7 @@ function enhanceCaptionWithTrending(content: string, trendingTopics: string[], i
 // Format caption + hashtags để copy
 export function formatForCopy(caption: Caption): string {
   const hashtags = caption.hashtags.join(' ');
-  return `${caption.content}\n\n${hashtags}`;
+  return `${caption.content} ${caption.icon}\n\n${hashtags}`;
 }
 
 // Fetch trending từ API
