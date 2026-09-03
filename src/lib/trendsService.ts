@@ -10,14 +10,15 @@ const CACHE_FILE = path.join(process.cwd(), '.trending-cache.json');
 // Search queries cho mỗi ngành
 const TRENDING_QUERIES: Record<Category, string[]> = {
   nails: ['nail art', 'manicure', 'gel nails'],
-  hair: ['hairstyle', 'haircut', 'balayage'],
-  restaurant: ['food', 'restaurant', 'gourmet'],
-  eyelash: ['eyelash extensions', 'lash', 'eye makeup'],
+  'hair-men': ['men haircut', 'barber style', 'men hairstyle'],
+  'hair-women': ['women hairstyle', 'haircut', 'balayage'],
+  restaurant: ['food recipe', 'cooking', 'delicious meal'],
+  eyelash: ['eyelash extensions', 'lash extensions', 'eye makeup'],
 };
 
 interface CacheData {
   data: Record<Category, string[]>;
-  lastFetch: string; // ISO date string
+  lastFetch: string;
 }
 
 interface SerpApiResponse {
@@ -38,20 +39,17 @@ function shouldFetch(): boolean {
   const now = new Date();
   const hour = now.getHours();
   
-  // Chưa đến 9h sáng thì không fetch
   if (hour < 9) {
     console.log('⏰ Before 9 AM, using cached data');
     return false;
   }
   
-  // Load cache
   const cache = loadCache();
   if (!cache) {
     console.log('📦 No cache, need to fetch');
     return true;
   }
   
-  // Kiểm tra nếu đã fetch hôm nay
   const lastFetchDate = new Date(cache.lastFetch);
   const today = new Date();
   
@@ -68,7 +66,6 @@ function shouldFetch(): boolean {
   return true;
 }
 
-// Load cache từ file
 function loadCache(): CacheData | null {
   try {
     if (fs.existsSync(CACHE_FILE)) {
@@ -81,7 +78,6 @@ function loadCache(): CacheData | null {
   return null;
 }
 
-// Save cache vào file
 function saveCache(data: Record<Category, string[]>): void {
   try {
     const cache: CacheData = {
@@ -95,7 +91,6 @@ function saveCache(data: Record<Category, string[]>): void {
   }
 }
 
-// Fetch trending cho 1 category
 async function fetchTrendingForCategory(category: Category): Promise<string[]> {
   try {
     const queries = TRENDING_QUERIES[category];
@@ -131,7 +126,6 @@ async function fetchTrendingForCategory(category: Category): Promise<string[]> {
           allTopics.push(...searches);
         }
 
-        // Delay để tránh rate limit
         await new Promise(resolve => setTimeout(resolve, 1000));
 
       } catch (error) {
@@ -148,9 +142,7 @@ async function fetchTrendingForCategory(category: Category): Promise<string[]> {
   }
 }
 
-// Fetch all trending
 export async function fetchAllTrending(): Promise<Record<Category, string[]>> {
-  // Check if we should fetch
   if (!shouldFetch()) {
     const cache = loadCache();
     if (cache) {
@@ -160,7 +152,7 @@ export async function fetchAllTrending(): Promise<Record<Category, string[]>> {
   
   console.log('🔄 Fetching trending from SerpAPI...');
   
-  const categories: Category[] = ['nails', 'hair', 'restaurant', 'eyelash'];
+  const categories: Category[] = ['nails', 'hair-men', 'hair-women', 'restaurant', 'eyelash'];
 
   const results = await Promise.all(
     categories.map(async (cat) => {
@@ -174,31 +166,28 @@ export async function fetchAllTrending(): Promise<Record<Category, string[]>> {
     trending[r.category] = r.topics;
   });
 
-  // Save to cache
   saveCache(trending);
   
   console.log('✅ Trending fetched and cached');
   return trending;
 }
 
-// Get default topics
 function getDefaultTopics(category: Category): string[] {
   const defaults: Record<Category, string[]> = {
     nails: ['soft glam', 'chrome nails', 'french tips', 'minimalist', 'blush'],
-    hair: ['wolf cut', 'balayage', 'curtain bangs', 'sleek bun', 'layers'],
-    restaurant: ['comfort food', 'brunch', 'local ingredients', 'seasonal', 'fusion'],
+    'hair-men': ['fade', 'textured crop', 'undercut', 'slick back', 'modern cut'],
+    'hair-women': ['wolf cut', 'balayage', 'curtain bangs', 'sleek bun', 'layers'],
+    restaurant: ['pizza', 'burger', 'pasta', 'steak', 'seafood'],
     eyelash: ['cat eye', 'wispy lashes', 'mega volume', 'natural look', 'doll eye'],
   };
   return defaults[category];
 }
 
-// Get cached data (không fetch)
 export function getCachedTrending(): Record<Category, string[]> | null {
   const cache = loadCache();
   return cache?.data || null;
 }
 
-// Get last fetch time
 export function getLastFetchTime(): string | null {
   const cache = loadCache();
   if (!cache) return null;

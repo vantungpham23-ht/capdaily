@@ -16,7 +16,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { Palette, Scissors, UtensilsCrossed, Sparkles } from 'lucide-react';
+import { Palette, Scissors, UtensilsCrossed, Sparkles, User, Heart } from 'lucide-react';
 import { CategoryConfig, Caption, Category } from '@/types';
 import { CaptionCard } from './CaptionCard';
 import { generateDailyCaptions, fetchTrending } from '@/lib/captionGenerator';
@@ -30,13 +30,16 @@ const iconMap: Record<string, React.ReactNode> = {
   scissors: <Scissors size={20} />,
   utensils: <UtensilsCrossed size={20} />,
   sparkles: <Sparkles size={20} />,
+  user: <User size={20} />,
+  heart: <Heart size={20} />,
 };
 
 const colorMap: Record<string, { header: string; icon: string; badge: string }> = {
   nails: { header: 'bg-gradient-to-r from-pink-500 to-pink-400', icon: 'bg-white/20', badge: 'bg-pink-500' },
-  hair: { header: 'bg-gradient-to-r from-purple-500 to-purple-400', icon: 'bg-white/20', badge: 'bg-purple-500' },
+  'hair-men': { header: 'bg-gradient-to-r from-blue-600 to-blue-500', icon: 'bg-white/20', badge: 'bg-blue-600' },
+  'hair-women': { header: 'bg-gradient-to-r from-purple-500 to-purple-400', icon: 'bg-white/20', badge: 'bg-purple-500' },
   restaurant: { header: 'bg-gradient-to-r from-orange-500 to-orange-400', icon: 'bg-white/20', badge: 'bg-orange-500' },
-  eyelash: { header: 'bg-gradient-to-r from-blue-500 to-blue-400', icon: 'bg-white/20', badge: 'bg-blue-500' },
+  eyelash: { header: 'bg-gradient-to-r from-blue-400 to-blue-300', icon: 'bg-white/20', badge: 'bg-blue-400' },
 };
 
 export function CategorySection({ category }: CategorySectionProps) {

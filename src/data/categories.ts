@@ -9,10 +9,17 @@ export const CATEGORIES: CategoryConfig[] = [
     color: 'bg-pink-500',
   },
   {
-    id: 'hair',
-    name: 'Hair',
-    nameSK: 'Vlasy',
-    icon: 'scissors',
+    id: 'hair-men',
+    name: 'Hair Men',
+    nameSK: 'Vlasy Páni',
+    icon: 'user',
+    color: 'bg-blue-600',
+  },
+  {
+    id: 'hair-women',
+    name: 'Hair Women',
+    nameSK: 'Vlasy Dámy',
+    icon: 'heart',
     color: 'bg-purple-500',
   },
   {
@@ -27,6 +34,6 @@ export const CATEGORIES: CategoryConfig[] = [
     name: 'Eyelash',
     nameSK: 'Mihalnice',
     icon: 'sparkles',
-    color: 'bg-blue-500',
+    color: 'bg-blue-400',
   },
 ];

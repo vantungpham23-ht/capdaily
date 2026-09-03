@@ -73,6 +73,10 @@ export function CaptionCard({ caption, index }: CaptionCardProps) {
             {caption.content} {caption.icon}
           </p>
 
+          <p className="text-gray-400 text-xs italic mt-1">
+            {caption.translation}
+          </p>
+
           <div className="flex flex-wrap gap-1 mt-1.5">
             {caption.hashtags.slice(0, 4).map((tag, i) => (
               <span key={i} className="text-xs text-gray-400">

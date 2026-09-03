@@ -1,4 +1,4 @@
-export type Category = 'nails' | 'hair' | 'restaurant' | 'eyelash';
+export type Category = 'nails' | 'hair-men' | 'hair-women' | 'restaurant' | 'eyelash';
 export type Language = 'sk' | 'en';
 
 export interface Caption {
@@ -6,6 +6,7 @@ export interface Caption {
   category: Category;
   language: Language;
   content: string;
+  translation: string; // Vietnamese translation
   icon: string;
   hashtags: string[];
   createdAt: string;
