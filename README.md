@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CapDaily — Každodenné Captiony
 
-## Getting Started
+Trình tạo caption hàng ngày cho 5 ngành: **nails**, **hair-men**, **hair-women**, **restaurant**, **eyelash**.
+Mỗi ngày mỗi category sinh **3 caption Slovak + 2 caption English**, kèm bản dịch tiếng Việt để đọc (không bị copy) và 5 hashtag.
 
-First, run the development server:
+## Điểm nổi bật: không lặp lại trong 30 ngày
+
+Caption được ghép từ 3 slot độc lập — `opener` + `body` + `closer`:
+
+| Category | openers × bodies × closers | Tổng biến thể / ngôn ngữ |
+|---|---|---|
+| nails | 12 × 15 × 8 | 1.440 |
+| hair-men | 13 × 15 × 7 | 1.365 |
+| hair-women | 13 × 15 × 8 | 1.560 |
+| restaurant | 13 × 15 × 8 | 1.560 |
+| eyelash | 13 × 15 × 8 | 1.560 |
+
+Cơ chế chọn caption có **3 lớp bảo đảm**, từ mạnh nhất đến dự phòng:
+
+1. **Deterministic partition (không cần storage)** — danh sách ứng viên được xáo trộn 1 lần bằng seed cố định, rồi đi theo chu kỳ `slotStart = (daysSinceEpoch % cycleDays) * take`.
+   Các lát cắt của một chu kỳ không chồng nhau ⇒ **0 lặp lại trong ≥30 ngày**, kể cả khi xóa cache hay đổi thiết bị.
+2. **localStorage history** — lưu fingerprint của caption đã dùng (giữ 45 ngày), loại trừ mọi caption dùng trong 30 ngày gần nhất.
+3. **Least-recently-used fallback** — nếu pool cạn, lấy caption lâu chưa dùng nhất.
+
+Ngoài ra mỗi ngày còn xoay:
+- **Trending topic** (14 chủ đề/category, xoay theo ngày)
+- **Theme theo thứ trong tuần** (Thứ 2 → Chủ nhật)
+- **Accent theo mùa** (12 tháng)
+- **Emoji trang trí** (18 emoji) + **icon category** (12–16 emoji)
+- **Hashtag** — 60% tiếng Anh + 40% tiếng bản địa, xoay ngẫu nhiên mỗi ngày
+
+## Kiểm chứng
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run verify:captions
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Script mô phỏng 60 ngày (có và không có history) + 365 ngày (worst case) và assert **0 lặp lại** trong cửa sổ 30 ngày.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Kết quả hiện tại:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+60 days, history enabled   → 1500 captions / 1500 unique  PASS
+60 days, history disabled  → 1500 captions / 1500 unique  PASS
+365 days, history disabled → 9125 captions / 9125 unique  PASS
+```
 
-## Learn More
+## Lệnh
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run dev              # dev server
+npm run build            # static export -> out/
+npm run typecheck        # tsc --noEmit
+npm run lint             # eslint
+npm run verify:captions  # test không trùng 30 ngày
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Cấu trúc
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/
+├── app/page.tsx                 # trang chính + điều hướng ngày
+├── components/
+│   ├── CategorySection.tsx       # card category, filter SK/EN, copy all
+│   └── CaptionCard.tsx           # hiển thị caption + dịch + trending chip
+├── data/captions.ts             # slot templates, hashtag, trending, theme
+├── lib/
+│   ├── captionGenerator.ts       # engine ghép caption + chọn không trùng
+│   ├── history.ts                # localStorage history (45 ngày)
+│   └── date.ts                   # helper date (local time, không UTC)
+└── types/index.ts
+```
 
-## Deploy on Vercel
+## Deploy
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+GitHub Actions (`.github/workflows/nextjs.yml`) build static export và publish lên GitHub Pages.
+Cần bật **Settings → Pages → Source: GitHub Actions**.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+> Lưu ý: dùng `output: "export"` trong `next.config.ts` — không có API route server-side.
+
+## Copy format
+
+```
+<caption> <emoji>
+
+#tag1 #tag2 #tag3 #tag4 #tag5
+```
+
+Bản dịch tiếng Việt chỉ hiển thị để đọc, **không bao giờ** được copy.
