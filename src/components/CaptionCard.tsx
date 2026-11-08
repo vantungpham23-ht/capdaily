@@ -1,11 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Copy, Check, TrendingUp, Languages } from 'lucide-react';
+import { GripVertical, Copy, Check, TrendingUp, Languages, Plus } from 'lucide-react';
 import { Caption } from '@/types';
 import { useCopyToClipboard } from '@/hooks/useCopyToClipboard';
-import { formatForCopy } from '@/lib/captionGenerator';
+import { formatForCopy, formatForCopyWithTrend } from '@/lib/captionGenerator';
 
 interface CaptionCardProps {
   caption: Caption;
@@ -15,6 +16,7 @@ interface CaptionCardProps {
 export function CaptionCard({ caption, index }: CaptionCardProps) {
   const { copiedId, copy } = useCopyToClipboard();
   const isCopied = copiedId === caption.id;
+  const [includeTrend, setIncludeTrend] = useState(false);
 
   const {
     attributes,
@@ -31,7 +33,10 @@ export function CaptionCard({ caption, index }: CaptionCardProps) {
   };
 
   const handleCopy = async () => {
-    await copy(formatForCopy(caption), caption.id);
+    const text = includeTrend
+      ? formatForCopyWithTrend(caption)
+      : formatForCopy(caption);
+    await copy(text, caption.id);
   };
 
   const langLabel = caption.language === 'sk' ? 'SK' : 'EN';
@@ -73,10 +78,23 @@ export function CaptionCard({ caption, index }: CaptionCardProps) {
           </span>
 
           {caption.trending && (
-            <span className="inline-flex items-center gap-1 rounded-md border border-amber-500/25 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-300">
+            <button
+              onClick={() => setIncludeTrend((v) => !v)}
+              title="Bật/tắt trend khi copy"
+              className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium transition-all ${
+                includeTrend
+                  ? 'border-amber-500/40 bg-amber-500/20 text-amber-700 dark:text-amber-200'
+                  : 'border-amber-500/25 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:text-amber-300'
+              }`}
+            >
               <TrendingUp size={9} />
-              <span className="max-w-[9rem] truncate">{caption.trending}</span>
-            </span>
+              {caption.trending}
+              {includeTrend ? (
+                <Check size={9} className="ml-0.5" />
+              ) : (
+                <Plus size={9} className="ml-0.5 opacity-60" />
+              )}
+            </button>
           )}
 
           <button
@@ -89,10 +107,10 @@ export function CaptionCard({ caption, index }: CaptionCardProps) {
           </button>
         </div>
 
-        {/* Caption body */}
-        <p className="text-[13.5px] leading-relaxed text-fg">
-          {caption.content}{' '}
-          <span className="text-base leading-none">{caption.icon}</span>
+        {/* Caption body - short and punchy, so it gets the most visual weight */}
+        <p className="text-[15px] font-semibold leading-snug tracking-tight text-fg">
+          {caption.content}
+          <span className="ml-1 text-base leading-none">{caption.icon}</span>
         </p>
 
         {/* Vietnamese translation */}
@@ -131,7 +149,7 @@ export function CaptionCard({ caption, index }: CaptionCardProps) {
             ) : (
               <>
                 <Copy size={12} />
-                Copy
+                {includeTrend ? 'Copy + trend' : 'Copy'}
               </>
             )}
           </button>

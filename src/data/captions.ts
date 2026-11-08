@@ -1,22 +1,26 @@
 import { Category, LocalizedSlot } from '@/types';
 
 /**
- * Slot-based caption templates.
- * A caption is assembled as:  opener + body + closer
+ * Short, trend-first caption bank.
+ *
+ * A caption is assembled as:   hook [+ tail] [+ trend word]  + emoji
+ *
+ * Everything is intentionally SHORT (roughly 3-9 words) because that is what
+ * performs on Instagram / TikTok right now: a punchy one-liner, a trend word,
+ * and an emoji. Long paragraphs get scrolled past.
  *
  * Each slot carries 3 languages:
  *   - sk.text : Slovak caption (published)
  *   - en.text : English caption (published)
  *   - *.vi    : Vietnamese translation (display only, never copied)
  *
- * Because the three slots are combined independently, every category yields
- * |openers| x |bodies| x |closers| distinct captions (thousands), which is
- * what makes the "no repeat for 30 days" guarantee possible.
+ * The hook x tail combination gives |hooks| x |tails| distinct captions per
+ * category and language, which is what powers the "no repeat for 30 days"
+ * guarantee.
  */
 export interface SlotBank {
-  openers: LocalizedSlot[];
-  bodies: LocalizedSlot[];
-  closers: LocalizedSlot[];
+  hooks: LocalizedSlot[];
+  tails: LocalizedSlot[];
 }
 
 /** Helper: build a fully trilingual slot. */
@@ -24,227 +28,298 @@ function t(sk: string, en: string, vi: string): LocalizedSlot {
   return { sk: { text: sk, vi }, en: { text: en, vi } };
 }
 
+/**
+ * Generic call-to-action tails shared by every category.
+ * Category-specific tails are defined per category below and merged in.
+ */
+const SHARED_TAILS: LocalizedSlot[] = [
+  t('☝️ link v bio', '☝️ link in bio', 'link trong bio'),
+  t('pozrite sa', 'look at this', 'nhìn nè'),
+  t('obľúbené?', 'a favourite?', 'yêu thích?'),
+  t('tag niekoho, kto to potrebuje', 'tag someone who needs this', 'tag người cần nè'),
+  t('v dnešnej postave', 'in today\u2019s mood', 'đúng tâm trạng hôm nay'),
+  t('neprezdím', 'not skipping this', 'không bỏ qua được'),
+  t('nechajte to tak', 'keep it', 'giữ lại nha'),
+  t('niečo pre vás', 'something for you', 'một món cho các bạn'),
+  t('kde to vzniklo', 'where it started', 'nơi bắt nguồn'),
+];
+
 export const CAPTION_SLOTS: Record<Category, SlotBank> = {
+  /* ------------------------------------------------------------------ */
+  /* NAILS                                                              */
+  /* ------------------------------------------------------------------ */
   nails: {
-    openers: [
-      t('Dokonalé nechty = sebavedomý úsmev', 'Perfect nails, confident smile', 'Móng hoàn hảo, nụ cười tự tin'),
-      t('Malé detaily, veľký rozdiel', 'Small details, big difference', 'Chi tiết nhỏ, khác biệt lớn'),
-      t('Vaše nechty, naša vášeň', 'Your nails, our passion', 'Đôi móng của bạn, đam mê của chúng tôi'),
-      t('Krása je v detailoch', 'Beauty lives in the details', 'Vẻ đẹp nằm ở những chi tiết'),
-      t('Nechty, ktoré hovoria za vás', 'Nails that speak for you', 'Móng tay thay lời nói cho bạn'),
-      t('Každý nechet je umelecké dielo', 'Every nail is a little masterpiece', 'Mỗi móng tay là một tác phẩm nghệ thuật'),
-      t('Efektívny deň začína dokonalými nechtami', 'A productive day starts with perfect nails', 'Ngày hiệu quả bắt đầu bằng đôi móng hoàn hảo'),
-      t('Luxusná starostlivosť o vaše nechty', 'Luxury care for your nails', 'Chăm sóc móng tay cao cấp'),
-      t('Keď vám ukáže ruky, každý sa pozrie', 'When you show your hands, everyone looks', 'Khi bạn giơ tay, ai cũng phải nhìn'),
-      t('Vaša krása, naša starostlivosť', 'Your beauty, our care', 'Vẻ đẹp của bạn, sự chăm sóc của chúng tôi'),
-      t('Nechty, ktoré dodávajú sebavedomý', 'Nails that add confidence', 'Móng tay trao thêm sự tự tin'),
-      t('Oproti včerajšiemu dňu, o dve ťažšie', 'Two shades bolder than yesterday', 'Rực hơn hôm qua hai sắc độ'),
+    hooks: [
+      t('nechty ako z Pinterestu', 'nails straight out of Pinterest', 'móng tay lấy từ Pinterest'),
+      t('glam, ktorý uvidíš všade', 'glam you will see everywhere', 'vẻ glam thấy ở khắp nơi'),
+      t('french tips, ale jemnejšie', 'french tips but softer', 'kiểu Pháp nhưng nhẹ hơn'),
+      t('obľúbenec tohto týždňa', 'the favourite of this week', 'món được yêu thích tuần này'),
+      t('short & sweet', 'short & sweet', 'ngắn và ngọt'),
+      t('tri týždne a stále perfekt', 'three weeks and still perfect', 'ba tuần rồi vẫn hoàn hảo'),
+      t('chrome energy', 'chrome energy', 'vibe chrome'),
+      t('chcem všetky', 'I want them all', 'tôi muốn có tất cả'),
+      t('tento lak si zoberiem domov', 'taking this polish home', 'màu này tôi sẽ mang về nhà'),
+      t('main character nechty', 'main character nails', 'móng main character'),
+      t('zlatý hodiny, ale pre nechty', 'golden hour but for nails', 'giờ vàng nhưng cho móng tay'),
+      t('moje obľúbené combo', 'my favourite combo', 'combo yêu thích của tôi'),
+      t('hot girl, cool nails', 'hot girl, cool nails', 'xinh đẹp, móng vẫn cool'),
+      t('nechty, ktoré chcem vidieť znova', 'nails I want to see again', 'móng muốn được nhìn lần nữa'),
+      t('mäkké ružové, tvrdý charakter', 'soft pink, hard character', 'hồng nhạt, tính cách mạnh'),
+      t('nehybám sa, kým sa nechci', 'not moving, not caring', 'không nhúc nhích, không quan tâm'),
+      t('tipy, na ktoré ste čakali', 'the tips you waited for', 'mẹo mà bạn đã chờ đợi'),
+      t('výnimočný deň, výnimočné nechty', 'extraordinary day, extraordinary nails', 'ngày đặc biệt, móng đặc biệt'),
+      t('self care, ale viditeľne', 'self care, but make it visible', 'chăm sóc bản thân, nhưng thấy được'),
+      t('naked, ale nie nud', 'naked, but not nude', 'nude nhưng không trần'),
+      t('lesklé, nie lesklé', 'shiny, not shiny', 'bóng mà không bóng'),
+      t('obľúbené nechty, opäť', 'favourite nails, again', 'móng yêu thích, lần nữa'),
+      t('čo sa hodí, to sa nosí', 'what fits, gets worn', 'đẹp là mặc'),
+      t('nechty do práce aj na párty', 'nails for work and for parties', 'móng cho công việc lẫn tiệc'),
+      t('black never disappoints', 'black never disappoints', 'đen không bao giờ thất vọng'),
+      t('jeden nádych, dva nechty', 'one breath, two nails', 'một hơi thở, hai móng'),
+      t('môj kyslík', 'my oxygen', 'oxy của tôi'),
+      t('takto vyzerá spokojnosť', 'this is what contentment looks like', 'đây là hạnh phúc'),
+      t('som v tom, nechajte ma', 'I am in it, leave me alone', 'tôi đang chìm trong đó, đừng làm phiền'),
+      t('toto si nechám', 'keeping these', 'cái này tôi giữ lại'),
+      t('menej je viac', 'less is more', 'ít hơn là nhiều hơn'),
+      t('perfect nie je náhoda', 'perfect is not an accident', 'hoàn hảo không phải ngẫu nhiên'),
+      t('nechty, ktoré sa páčia aj mne', 'nails I actually like', 'móng tôi thực sự thích'),
+      t('takto to má byť', 'this is how it should be', 'đáng lẽ phải thế này'),
+      t('body but for your hands', 'body but for your hands', 'body nhưng cho đôi tay'),
+      t('mám prsty, mám nechty', 'I have fingers, I have nails', 'có ngón, có móng'),
+      t('nechty vo výške luxusu', 'nails at luxury level', 'móng ở tầm cao cấp'),
+      t('kde su tie nechty', 'where are those nails', 'mấy cái móng đó rồi'),
+      t('môj obľúbený rozmer', 'my favourite size', 'kích cỡ yêu thích'),
+      t('krátke, ostré, drahé', 'short, sharp, expensive', 'ngắn, sắc, đắt'),
+      t('len vtedy, keď je toto', 'only when it is this', 'chỉ khi là thế này'),
+      t('nechty ako výraz', 'nails as a statement', 'móng tay như một tuyên bố'),
+      t('happy friday, krásne nechty', 'happy friday, pretty nails', 'thứ sáu vui, móng đẹp'),
     ],
-    bodies: [
-      t('Pravidelná starostlivosť = krásne nechty', 'Regular care = beautiful nails', 'Chăm sóc đều đặn = móng đẹp'),
-      t('Nechty ako šperky na vašich rukách', 'Nails like jewellery on your hands', 'Móng tay như trang sức trên tay bạn'),
-      t('Minimalizmus, ktorý zaujme', 'Minimalism that still gets noticed', 'Tối giản mà ấn tượng'),
-      t('Hravá farebnosť na vašich nechtoch', 'Playful colour on your nails', 'Màu sắc vui nhộn trên móng tay'),
-      t('Prirodzená krása vašich nechtov', 'The natural beauty of your nails', 'Vẻ đẹp tự nhiên của đôi móng'),
-      t('Trend, ktorý nikdy nevyjde z módy', 'A trend that never goes out of style', 'Xu hướng không bao giờ lỗi mốt'),
-      t('Francúzska manikúra - klasika stále živá', 'French manicure - a classic that stays alive', 'Kiểu Pháp - kinh điển không bao giờ cũ'),
-      t('Odhaľte krásu vašich rúk', 'Reveal the beauty of your hands', 'Tôn lên vẻ đẹp đôi tay bạn'),
-      t('Gélová manikúra = dlhotrvácna krása', 'Gel manicure = long-lasting beauty', 'Móng gel = vẻ đẹp bền lâu'),
-      t('Nechty, ktoré rozdávajú úsmevy', 'Nails that hand out smiles', 'Móng tay trao nụ cười'),
-      t('Tipy, ktoré udržia nechty zdravé', 'Tips that keep your nails healthy', 'Mẹo giữ móng tay của bạn khỏe đẹp'),
-      t('Ochraňte prirodzenú krásu svojich nechtov', 'Protect the natural beauty of your nails', 'Bảo vệ vẻ đẹp tự nhiên của đôi móng'),
-      t('Každý detail môže zmeniť celý dojem', 'Every detail can change the whole impression', 'Mỗi chi tiết có thể đổi cả ấn tượng'),
-      t('Seasonálne farby, ktoré vám sednú', 'Seasonal shades that suit you', 'Màu theo mùa hợp với bạn'),
-      t('Vyberte si štýl, ktorý vám vyhovuje', 'Pick the style that feels like you', 'Chọn phong cách thuộc về bạn'),
-    ],
-    closers: [
-      t('Príďte sa poradiť', 'Come and get your consultation', 'Hãy đến để được tư vấn'),
-      t('Vitaľame vás v našom salóne', 'We welcome you in our salon', 'Chúng tôi đón bạn tại salon'),
-      t('Rezervujte si svoj termín', 'Book your slot', 'Hãy đặt lịch của bạn'),
-      t('Vaša spokojnosť je našou prioritou', 'Your satisfaction is our priority', 'Sự hài lòng của bạn là ưu tiên'),
-      t('Objednajte sa ešte dnes', 'Book today', 'Đặt lịch ngay hôm nay'),
-      t('Tešíme sa na vás', 'We look forward to seeing you', 'Chúng tôi mong được gặp bạn'),
-      t('Dohodnite si čas pre seba', 'Take a moment for yourself', 'Hẹn giờ cho chính bạn'),
-      t('Zistite, čo vám najviac vyhovuje', 'Find what works best for you', 'Tìm điều hợp với bạn nhất'),
+    tails: [
+      t('recept DM', 'DM for the polish', 'nhắn để xin màu'),
+      t('objednajte si termín', 'book your slot', 'đặt lịch nha'),
+      t('spýtaj sa', 'just ask', 'cứ hỏi'),
+      ...SHARED_TAILS,
     ],
   },
 
+  /* ------------------------------------------------------------------ */
+  /* HAIR MEN                                                            */
+  /* ------------------------------------------------------------------ */
   'hair-men': {
-    openers: [
-      t('Pánsky strih, ktorý zmení váš štýl', "A men's cut that changes your style", 'Kiểu tóc nam thay đổi phong cách của bạn'),
-      t('Krátke vlasy, veľký dojem', 'Short hair, big impact', 'Tóc ngắn, ấn tượng lớn'),
-      t('Profesionálny strih pre moderného muža', 'Professional cut for the modern man', 'Cắt tóc chuyên nghiệp cho quý ông hiện đại'),
-      t('Shave, strih, nový ty', 'Shave, cut, new you', 'Cạo, cắt, phiên bản mới của bạn'),
-      t('Mužnosť v každom vlase', 'Masculinity in every strand', 'Sự nam tính trong từng sợi tóc'),
-      t('Klasický strih s moderným twistom', 'Classic cut with a modern twist', 'Kiểu cổ điển với nét hiện đại'),
-      t('Vlasy, ktoré definujú váš štýl', 'Hair that defines your style', 'Tóc định nghĩa phong cách của bạn'),
-      t('Od školského dvora po business meeting', 'From the schoolyard to the boardroom', 'Từ sân trường đến phòng họp'),
-      t('Strih, ktorý sedí na 100%', 'A cut that fits you 100%', 'Kiểu tóc vừa khít 100%'),
-      t('Pánska eleganc na dosah', 'Menswear elegance within reach', 'Lịch lãm đàn ông trong tầm tay'),
-      t('Dobré vlasy hovoria za vás', 'Good hair does the talking', 'Mái tóc đẹp nói thay bạn'),
-      t('Čas na refresh vášho vzhľadu', 'Time to refresh your look', 'Đã đến lúc làm mới diện mạo'),
-      t('Strih podľa vás, presne tak', 'A cut that is yours, exactly', 'Kiểu cắt riêng của bạn, chính xác'),
+    hooks: [
+      t('strih, ktorý zmení všetko', 'the cut that changes everything', 'kiểu cắt thay đổi tất cả'),
+      t('fade season', 'fade season', 'mùa fade'),
+      t('barber magic', 'barber magic', 'phép thuật của barber'),
+      t('dneska iný človek', 'different person today', 'hôm nay là người khác'),
+      t('ostré a čisté', 'sharp and clean', 'sắc và gọn'),
+      t('textúra, ktorá drží', 'texture that holds', 'kết cấu giữ dáng'),
+      t('buzz a be cool', 'buzz and be cool', 'buzz và tỏa sáng'),
+      t('mullet is back', 'the mullet is back', 'mullet đã quay lại'),
+      t('undercut energy', 'undercut energy', 'vibe undercut'),
+      t('som v tom', 'I am in it', 'tôi đang chơi'),
+      t('moje vlasy, moje pravidlá', 'my hair, my rules', 'tóc tôi, luật của tôi'),
+      t('strih bez diskusie', 'no debate, just the cut', 'không bàn, cứ cắt'),
+      t('pánsky fresh', 'men look fresh', 'đàn ông trông mới'),
+      t('takto to vyzerá lepšie', 'this is how it looks better', 'thế này đẹp hơn'),
+      t('kompletná zmena', 'complete change', 'thay đổi hoàn toàn'),
+      t('nechajte ma takto', 'leave me like this', 'cứ để tôi thế này'),
+      t('tri týždne dobreho vzhľadu', 'three weeks of looking good', 'ba tuần đẹp trai'),
+      t('strih, ktorý sedí', 'a cut that fits', 'kiểu cắt vừa khít'),
+      t('žiadne kompromisy', 'no compromises', 'không thỏa hiệp'),
+      t('páni idú do remake', 'men are getting a remake', 'đàn ông đi làm mới'),
+      t('svieži štýl', 'fresh style', 'phong cách mới'),
+      t('menej, ale lepšie', 'less but better', 'ít mà hơn'),
+      t('budúci ty, teraz', 'future me, now', 'tương lai của tôi, ngay bây giờ'),
+      t('dobre padnúce vlasy', 'hair that fits', 'tóc hợp'),
+      t('nový strih, nový štýl', 'new cut, new style', 'cắt mới, phong cách mới'),
+      t('ostré hrany mäkké farby', 'sharp edges, soft tones', 'góc sắc, tông mềm'),
+      t('toto je môj sign', 'this is my signature', 'đây là đặc trưng của tôi'),
+      t('vlasy, ktoré držia', 'hair that holds its shape', 'tóc giữ dáng'),
+      t('dnes som extra', 'extra today', 'hôm nay tôi extra'),
+      t('komfort verzus štýl', 'comfort meets style', 'thoải mái gặp phong cách'),
+      t('pánska elegance, žiadne starosti', 'menswear, no worries', 'phong cách nam, không lo'),
+      t('svieži výraz', 'fresh expression', 'biểu cảm mới'),
+      t('strih na mieru', 'cut to measure', 'cắt theo đo'),
+      t('konečne som spokojný', 'finally happy with it', 'cuối cùng tôi hài lòng'),
+      t('wow factor, ale tichý', 'wow factor, quietly', 'gây ấn tượng, nhưng tinh tế'),
+      t('najviac mu hovoria vlasy', 'your hair says the most', 'tóc nói nhiều nhất'),
+      t('takto sa cítim', 'this is how I feel', 'tôi cảm thấy thế này'),
+      t('denný upgrade', 'daily upgrade', 'nâng cấp mỗi ngày'),
+      t('kto hovorí, že nie', 'who says no', 'ai nói không'),
+      t('výraz, ktorý budeš cítiť', 'a look you will feel', 'vẻ ngoài bạn sẽ cảm nhận'),
+      t('konečne niečo iné', 'finally something different', 'cuối cùng khác đi một chút'),
+      t('zlaté pravidlo', 'the golden rule', 'quy tắc vàng'),
+      t('toto musím povedať', 'had to share this', 'phải chia sẻ đi'),
     ],
-    bodies: [
-      t('Faded, tapered, whatever you need', 'Faded, tapered, whatever you need', 'Fade, taper, bất cứ gì bạn cần'),
-      t('Fade haircut, confidence boost', 'Fade haircut, confidence boost', 'Cắt fade, tăng sự tự tin'),
-      t('Vlasy ako z filmu', 'Hair straight out of a movie', 'Tóc như trong phim'),
-      t('Sharp look for sharp guys', 'Sharp look for sharp guys', 'Vẻ ngoài sắc nét cho phái mạnh'),
-      t('Minimalistický štýl pre mužov', 'Minimal style for men', 'Phong cách tối giản cho đàn ông'),
-      t('Barber precision, every time', 'Barber precision, every time', 'Độ chính xác của barber, mỗi lần'),
-      t('Moderný muž, moderný strih', 'Modern man, modern cut', 'Người đàn ông hiện đại, kiểu tóc hiện đại'),
-      t('Strih, ktorý hovorí za vás', 'A cut that speaks for you', 'Kiểu tóc thay lời nói'),
-      t('Buzz cut, clean vibes', 'Buzz cut, clean vibes', 'Cắt buzz, phong cách gọn gàng'),
-      t('Undercut, statement look', 'Undercut, statement look', 'Undercut, phong cách ấn tượng'),
-      t('Vlasy v kondícii = lepšia nálada', 'Good hair days, good mood days', 'Tóc khỏe đẹp = tâm trạng tốt hơn'),
-      t('Mužský štýl, žiadne kompromisy', 'Mens style, zero compromises', 'Phong cách nam giới, không thỏa hiệp'),
-      t('Textúra, ktorá drží tvar', 'Texture that holds the shape', 'Kết cấu giữ dáng hoàn hảo'),
-      t('Údržba, ktorá nezaberie veľa času', 'Maintenance that takes no time', 'Cách chăm sóc tốn ít thời gian'),
-      t('Stríh, ktorý rastie s vami', 'A cut that grows out with you', 'Kiểu cắt đẹp khi tóc dài lên'),
-    ],
-    closers: [
-      t('Vitaľame vás v barber shope', 'Welcome to the barber shop', 'Chúng tôi đón bạn tại barber shop'),
-      t('Rezervujte si čas', 'Book your time', 'Hãy đặt lịch'),
-      t('Dohodnite si čas pre seba', 'Take a moment for yourself', 'Hẹn giờ cho chính bạn'),
-      t('Tešíme sa na vás', 'We look forward to seeing you', 'Chúng tôi mong được gặp bạn'),
-      t('Príďte relaxovať, my sa postaráme', 'Come relax, we handle the rest', 'Hãy đến thư giãn, chúng tôi lo phần còn lại'),
-      t('Vaša objednávka je dôležitá', 'Your booking matters to us', 'Đơn đặt hàng của bạn là quan trọng'),
-      t('Príďte a presvedčte sa', 'Come see for yourself', 'Hãy đến và tự kiểm chứng'),
+    tails: [
+      t('recept DM', 'DM for details', 'nhắn để xin chi tiết'),
+      t('objednajte si čas', 'book your time', 'đặt lịch nha'),
+      t('koho zvoniem', 'who do I call', 'gọi ai đây'),
+      ...SHARED_TAILS,
     ],
   },
 
+  /* ------------------------------------------------------------------ */
+  /* HAIR WOMEN                                                          */
+  /* ------------------------------------------------------------------ */
   'hair-women': {
-    openers: [
-      t('Nový účes = nová energia', 'New hair, new energy', 'Kiểu tóc mới = năng lượng mới'),
-      t('Vlasy, ktoré menia celý look', 'Hair that changes the whole look', 'Tóc thay đổi toàn bộ diện mạo'),
-      t('Profesionálna starostlivosť o vaše vlasy', 'Professional care for your hair', 'Chăm sóc tóc chuyên nghiệp'),
-      t('Farbenie, ktoré vás transformuje', 'Colour that transforms you', 'Nhuộm tóc biến đổi bạn'),
-      t('Strih, ktorý sedí vašej osobnosti', 'A cut that fits your personality', 'Kiểu cắt phù hợp cá tính bạn'),
-      t('Zdravé vlasy = sebavedomý vzhľad', 'Healthy hair = confident look', 'Tóc khỏe = vẻ ngoài tự tin'),
-      t('Od nudného k úžasnému', 'From plain to fabulous', 'Từ nhàm chán đến tuyệt vời'),
-      t('Vlasy ako z reklamy', 'Hair straight out of a campaign', 'Tóc như trong quảng cáo'),
-      t('Každý strih je nový začiatok', 'Every cut is a fresh start', 'Mỗi kiểu cắt là khởi đầu mới'),
-      t('Účes, ktorý vám pristane', 'A hairstyle that suits you', 'Kiểu tóc hợp với bạn'),
-      t('Dneska si zaslúžite byť úžasná', 'Today you deserve to look amazing', 'Hôm nay bạn xứng đáng được xinh đẹp'),
-      t('Čas dať vlasom nový život', 'Time to give your hair a new life', 'Đã đến lúc cho mái tóc một cuộc đời mới'),
-      t('Každý deň iný vibe, iné vlasy', 'A different vibe every day', 'Mỗi ngày một phong cách khác nhau'),
+    hooks: [
+      t('vlasy hovoria, nechajte ich', 'let the hair do the talking', 'để mái tóc nói thay'),
+      t('balayage, ktoré svieti', 'balayage that glows', 'balayage tỏa sáng'),
+      t('wolf cut, ale jemnejšie', 'wolf cut but softer', 'wolf cut nhưng nhẹ hơn'),
+      t('dneska vlásen', 'hair goals today', 'hôm nay tóc đẹp trai'),
+      t('lesklé, zdravé, štíhlé', 'shiny, healthy, sleek', 'bóng, khỏe, mượt'),
+      t('môj obľúbený look', 'my signature look', 'vẻ ngoài đặc trưng của tôi'),
+      t('raz, dva, zmenené', 'one, two, transformed', 'một, hai, biến đổi'),
+      t('zlatý hodiny, ale pre vlasy', 'golden hour but for hair', 'giờ vàng nhưng cho tóc'),
+      t('nový strih, nová energia', 'new cut, new energy', 'cắt mới, năng lượng mới'),
+      t('vlnky, ktoré neposlúchajú', 'waves that do not listen', 'sóng không nghe lời'),
+      t('konečne som spokojná', 'finally happy with it', 'cuối cùng tôi hài lòng'),
+      t('moja hair era', 'my hair era', 'era tóc của tôi'),
+      t('len pre seba', 'just for me', 'chỉ cho bản thân'),
+      t('takto to má byť', 'this is how it should be', 'đáng lẽ phải thế này'),
+      t('niekto sa spýtal', 'someone asked', 'có người hỏi'),
+      t('chcem si to nechať', 'keeping this one', 'cái này tôi giữ lại'),
+      t('textúra, ktorá žije', 'texture with life', 'kết cấu sống động'),
+      t('menej je viac', 'less is more', 'ít hơn là nhiều hơn'),
+      t('údržba, ktorá nezaberie', 'maintenance that takes no time', 'chăm sóc tốn ít thời gian'),
+      t('strih, ktorý rastie s vami', 'a cut that grows out with you', 'kiểu cắt đẹp khi tóc dài lên'),
+      t('fringe, ktoré funguje', 'a fringe that actually works', 'tóc mái thực sự hợp'),
+      t('svieži, čistý, môj', 'fresh, clean, mine', 'mới, sạch, của tôi'),
+      t('môj hrejšok', 'my armour', 'giáp của tôi'),
+      t('takto sa cítim', 'this is how I feel', 'tôi cảm thấy thế này'),
+      t('kde su tie vlasy', 'where did those curls go', 'mấy cái tóc xoăn đó rồi'),
+      t('nový look, nový vibe', 'new look, new vibe', 'look mới, vibe mới'),
+      t('long hair energy', 'long hair energy', 'vibe tóc dài'),
+      t('dokonalé odtieňe', 'perfect tones', 'tông màu hoàn hảo'),
+      t('kto hovorí, že nie', 'who says no', 'ai nói không'),
+      t('môj každodenný reboot', 'my daily reboot', 'khởi động lại mỗi ngày'),
+      t('dneska som iná', 'a different me today', 'hôm nay tôi khác'),
+      t('takto vyzerá dobrý deň', 'this is what a good day looks like', 'đây là ngày đẹp'),
+      t('konečne', 'finally', 'cuối cùng'),
+      t('wow, len takto', 'wow, just like this', 'wow, đúng kiểu này'),
+      t('skutočný self care', 'actual self care', 'self care thật sự'),
+      t('toto musím povedať', 'had to share this', 'phải chia sẻ đi'),
+      t('moja zlatá formula', 'my golden formula', 'công thức vàng của tôi'),
+      t('strih, ktorý vám sedí', 'a cut that suits you', 'kiểu cắt hợp với bạn'),
+      t('menej stresu, viac vlasov', 'less stress, more hair', 'ít stress, nhiều tóc'),
+      t('svieža energia', 'fresh energy', 'năng lượng mới'),
+      t('ideálny sprievodca', 'the perfect guide', 'người dẫn đường hoàn hảo'),
+      t('nikto to nevymyslel', 'nobody invented this', 'không ai nghĩ ra'),
     ],
-    bodies: [
-      t('Krásne vlasy nepotrebujú veľa', 'Beautiful hair needs less than you think', 'Tóc đẹp không cần nhiều'),
-      t('Minimalistická krása vašich vlasov', 'The minimalist beauty of your hair', 'Vẻ đẹp tối giản của mái tóc'),
-      t('Trendové farby tejto sezóny', "This season's trend colours", 'Màu xu hướng mùa này'),
-      t('Balayage, ktorý ohromí', 'Balayage that turns heads', 'Balayage ấn tượng'),
-      t('Jemné vlny pre jemnú dušu', 'Soft waves for a soft soul', 'Sóng nhẹ cho tâm hồn nhẹ nhàng'),
-      t('Rovné vlasy, čistá elegancia', 'Straight hair, pure elegance', 'Tóc thẳng, thanh lịch thuần khiết'),
-      t('Kučery, ktoré definujú osobnosť', 'Curls that define your personality', 'Tóc xoăn định nghĩa cá tính bạn'),
-      t('Dlhé vlasy, večná elegancia', 'Long hair, endless elegance', 'Tóc dài, thanh lịch vĩnh cửu'),
-      t('Objem tam, kde ho potrebujete', 'Volume exactly where you need it', 'Tạo volume nơi bạn cần'),
-      t('Ležérny štýl pre každý deň', 'Effortless style for every day', 'Phong cách casual mỗi ngày'),
-      t('Večerný look pre špeciálne príležitosti', 'An evening look for special occasions', 'Diện tối cho dịp đặc biệt'),
-      t('Blowout, ktorý vás zalúpi', 'A blowout worth melting for', 'Blowout khiến bạn mê mẩn'),
-      t('Farbenie, ktoré rozhovorí', 'Colour that speaks volumes', 'Nhuộm tóc đầy ấn tượng'),
-      t('Vlasová starostlivosť, ktorá vidno', 'Hair care you can actually see', 'Chăm sóc tóc thấy rõ kết quả'),
-      t('Textúra, ktorú cítiť aj vidieť', 'Texture you can feel and see', 'Kết cấu vừa cảm được vừa thấy được'),
-    ],
-    closers: [
-      t('Príďte si dať poradiť', 'Come get your consultation', 'Hãy đến để được tư vấn'),
-      t('Rezervujte si svoj termín', 'Book your slot', 'Hãy đặt lịch của bạn'),
-      t('Vitaľame vás u nás', 'We would love to see you', 'Chúng tôi rất muốn gặp bạn'),
-      t('Tešíme sa na vás', 'We look forward to seeing you', 'Chúng tôi mong được gặp bạn'),
-      t('Dohodnite si čas pre seba', 'Take a moment for yourself', 'Hẹn giờ cho chính bạn'),
-      t('Vaša spokojnosť je našou prioritou', 'Your satisfaction is our priority', 'Sự hài lòng của bạn là ưu tiên'),
-      t('Objednajte sa ešte dnes', 'Book today', 'Đặt lịch ngay hôm nay'),
-      t('Povieme si, čo vám sedne najlepšie', 'We will find what suits you best', 'Chúng tôi sẽ tìm điều hợp với bạn nhất'),
+    tails: [
+      t('recept DM', 'DM for the recipe', 'nhắn để xin công thức'),
+      t('objednajte si čas', 'book your slot', 'đặt lịch nha'),
+      t('koho zvoniem', 'who do I call', 'gọi ai đây'),
+      ...SHARED_TAILS,
     ],
   },
 
+  /* ------------------------------------------------------------------ */
+  /* RESTAURANT                                                          */
+  /* ------------------------------------------------------------------ */
   restaurant: {
-    openers: [
-      t('Chuť, ktorá rozpráva príbeh', 'Flavour that tells a story', 'Hương vị kể câu chuyện'),
-      t('Každé jedlo je zážitok', 'Every dish is an experience', 'Mỗi món ăn là một trải nghiệm'),
-      t('Varíme s láskou, podávame s úsmevom', 'Cooked with love, served with a smile', 'Nấu với tình yêu, phục vụ với nụ cười'),
-      t('Od farmy až na váš stôl', 'From the farm to your table', 'Từ nông trại đến bàn ăn của bạn'),
-      t('Jedlo, ktoré si zamilujete', 'Food you will fall in love with', 'Món ăn bạn sẽ yêu thích'),
-      t('Chuť, na ktorú sa nezabúda', 'A taste you will not forget', 'Hương vị không thể quên'),
-      t('Rodinná atmosféra, profesionálna kuchyňa', 'Family atmosphere, professional kitchen', 'Không khí gia đình, bếp chuyên nghiệp'),
-      t('Dneska vám chystáme niečo výnimočné', 'Today we prepared something special', 'Hôm nay chúng tôi chuẩn bị điều đặc biệt'),
-      t('Vitaľame vás v našom podniku', 'Welcome to our restaurant', 'Chúng tôi đón bạn tại nhà hàng'),
-      t('Miesto, kde sa rodia zážitky', 'A place where experiences are born', 'Nơi những trải nghiệm ra đời'),
-      t('Každý deň má vlastný príbeh', 'Every day has its own story', 'Mỗi ngày có câu chuyện riêng'),
-      t('Dobrá chuť začína dobrou náladou', 'Great taste starts with a good mood', 'Hương vị ngon bắt đầu từ tâm trạng tốt'),
-      t('Príďte na chvíľu pre seba', 'Come for a moment for yourself', 'Hãy đến dành một chút cho chính mình'),
+    hooks: [
+      t('dneska varíme s láskou', 'cooking with love today', 'hôm nay nấu với tình yêu'),
+      t('domáca kuchyňa, otvorená kuchyňa', 'home cooking, open kitchen', 'bếp nhà, bếp mở'),
+      t('to tu smrdí fantasticky', 'this smells incredible', 'mùi này thơm phức'),
+      t('príďte na chvíľu pre seba', 'come for a moment for yourself', 'đến dành chút cho mình'),
+      t('dnešné menu hovorí', 'today\u2019s menu is talking', 'menu hôm nay đang nói'),
+      t('čerstvé, lokálne, sezónne', 'fresh, local, seasonal', 'tươi, địa phương, theo mùa'),
+      t('všetko doma', 'everything homemade', 'tất cả tự làm'),
+      t('chutný zážitok', 'a tasty experience', 'một trải nghiệm thơm ngon'),
+      t('od farmy na stôl', 'from the farm to the table', 'từ nông trại đến bàn ăn'),
+      t('recepty po generácie', 'family recipes', 'công thức truyền thống'),
+      t('najviac obľúbené', 'the most ordered', 'món được gọi nhiều nhất'),
+      t('dneska odporúčame', 'today\u2019s recommendation', 'hôm nay chúng tôi đề xuất'),
+      t('príďte ochutnať', 'come and taste', 'mời đến nếm thử'),
+      t('všetko pripravené denne', 'made fresh daily', 'làm mới mỗi ngày'),
+      t('comfort food, ale level', 'comfort food, but elevated', 'món comfort, nhưng nâng cao'),
+      t('kde vám chodíte na večeru', 'where do you go for dinner', 'bạn đi ăn tối ở đâu'),
+      t('takto to vyzerá sviatok', 'this is what a celebration looks like', 'đây là dịp ăn mừng'),
+      t('chutí, ktoré zostáva', 'a flavour that lingers', 'hương vị còn lại'),
+      t('nový týžden, nové chute', 'new week, new flavours', 'tuần mới, hương vị mới'),
+      t('zelenina, ale vôňa', 'vegetables, but make it flavourful', 'rau củ, nhưng đầy hương vị'),
+      t('domáce jedlo, úprimne', 'homemade food, honestly', 'đồ ăn nhà, thật lòng'),
+      t('neskôr, to si chcem zopakovať', 'I will order this again', 'tôi sẽ gọi món này lại'),
+      t('sladké rozhodnutie', 'a sweet decision', 'quyết định ngọt'),
+      t('otvoríme vám dvere', 'doors open, come in', 'cửa mở, mời vào'),
+      t('každý deň má iný príbeh', 'every day is a new story', 'mỗi ngày một câu chuyện'),
+      t('kvalita, ktorá chuť zistí', 'quality you can taste', 'chất lượng cảm nhận được'),
+      t('niečo pre vegetariánov', 'something for the vegetarians', 'có món cho người ăn chay'),
+      t('voda, chlieb, chuť', 'water, bread, taste', 'nước, bánh mì, hương vị'),
+      t('najlepšie menu dne', 'best menu of the day', 'menu ngon nhất hôm nay'),
+      t('sedíme vonku', 'we are outside today', 'hôm nay ngồi ngoài trời'),
+      t('kuchyňa otvorená pre vás', 'the kitchen is open for you', 'bếp mở cho bạn'),
+      t('dneska bez chytania', 'no phones at the table today', 'hôm nay không cầm điện thoại'),
+      t('kde to varíme', 'where we cook', 'nơi chúng tôi nấu'),
+      t('na stole každý deň', 'on the table every day', 'trên bàn mỗi ngày'),
+      t('malé menu, veľká chuť', 'small menu, big flavour', 'menu nhỏ, hương vị lớn'),
+      t('všetko pripravené zo srdca', 'everything made from the heart', 'mọi món đều chuẩn bị từ trái tim'),
+      t('toto je náš recept', 'this is our recipe', 'đây là công thức của chúng tôi'),
+      t('nenechajte si ujsť', 'do not miss this', 'đừng bỏ lỡ'),
+      t('chutný dnes', 'tasty today', 'ngon đây'),
     ],
-    bodies: [
-      t('Kvalitné suroviny = skvelé jedlo', 'Quality ingredients = great food', 'Nguyên liệu chất lượng = món ngon'),
-      t('Pozvite chuťové pohánky na cestu', 'Take your taste buds on a journey', 'Mời vị giác của bạn đi du lịch'),
-      t('Jedlo ako umenie', 'Food as art', 'Ẩm thực như nghệ thuật'),
-      t('Fajnšmekri si prídu na svoje', 'Food lovers will not be disappointed', 'Người sành ăn sẽ hài lòng'),
-      t('Jednoduchá kuchyňa, výnimočná chuť', 'Simple cooking, exceptional taste', 'Nấu nướng đơn giản, hương vị đặc biệt'),
-      t('Čerstvé suroviny každý deň', 'Fresh ingredients every day', 'Nguyên liệu tươi mỗi ngày'),
-      t('Recepty odovzdávané generáciami', 'Recipes passed down through generations', 'Công thức truyền qua nhiều thế hệ'),
-      t('Jedlo, ktoré spája ľudí', 'Food that brings people together', 'Món ăn kết nối mọi người'),
-      t('Priestor pre každú príležitosť', 'A space for every occasion', 'Không gian cho mọi dịp'),
-      t('Oslava chuti', 'A celebration of flavour', 'Kỷ niệm hương vị'),
-      t('Vychutnajte si každé sústo', 'Savour every bite', 'Hãy tận hưởng từng miếng'),
-      t('Každý detail môže zmeniť celý deň', 'Every detail can change the whole day', 'Mỗi chi tiết có thể đổi cả ngày'),
-      t('Prirodzené chute bez kompromisov', 'Natural flavours without compromise', 'Hương vị tự nhiên, không thỏa hiệp'),
-      t('Domáca atmosféra, moderný komfort', 'Homely atmosphere, modern comfort', 'Không khí gia đình, tiện nghi hiện đại'),
-      t('Dôraz na chuť, ktorý zostáva', 'A focus on flavour that lingers', 'Tập trung vào hương vị còn lại'),
-    ],
-    closers: [
-      t('Príďte ochutnať', 'Come and taste', 'Hãy đến nếm thử'),
-      t('Rezervujte si stôl', 'Reserve your table', 'Hãy đặt bàn'),
-      t('Tešíme sa na vás', 'We look forward to seeing you', 'Chúng tôi mong được gặp bạn'),
-      t('Dohodnite si čas pre seba', 'Take a moment for yourself', 'Hẹn giờ cho chính bạn'),
-      t('Uvidíme sa pri stole', 'See you at the table', 'Hẹn gặp bạn tại bàn ăn'),
-      t('Vaša spokojnosť je našou prioritou', 'Your satisfaction is our priority', 'Sự hài lòng của bạn là ưu tiên'),
-      t('Príďte s chuťou a náladou', 'Come hungry and happy', 'Hãy đến với khẩu vị và tâm trạng tốt'),
-      t('Objednajte si miesto včas', 'Book your place in advance', 'Hãy đặt chỗ trước'),
+    tails: [
+      t('☝️ rezervujte stôl', '☝️ book a table', 'đặt bàn nha'),
+      t('recept DM', 'DM for the recipe', 'nhắn để xin công thức'),
+      t('kde to varíme', 'where we cook', 'nơi chúng tôi nấu'),
+      ...SHARED_TAILS,
     ],
   },
 
+  /* ------------------------------------------------------------------ */
+  /* EYELASH                                                             */
+  /* ------------------------------------------------------------------ */
   eyelash: {
-    openers: [
-      t('Oči, ktoré oslnia každého', 'Eyes that stun everyone', 'Đôi mắt làm mọi người choáng ngợp'),
-      t('Mihalnice, ktoré robia zázraky', 'Lashes that work magic', 'Lông mi tạo nên điều kỳ diệu'),
-      t('Prirodzená krása vašich očí', 'The natural beauty of your eyes', 'Vẻ đẹp tự nhiên của đôi mắt'),
-      t('Dokonalé mihalnice pre dokonalý pohľad', 'Perfect lashes for a perfect look', 'Lông mi hoàn hảo cho cái nhìn hoàn hảo'),
-      t('Mihalnice, ktoré hovoria', 'Lashes that do the talking', 'Lông mi thay lời nói'),
-      t('Očarujúce mihalnice na každý deň', 'Alluring lashes every single day', 'Lông mi quyến rũ mỗi ngày'),
-      t('Krása začína od očí', 'Beauty starts with the eyes', 'Vẻ đẹp bắt đầu từ đôi mắt'),
-      t('Mihalnice ako z rozprávky', 'Lashes straight from a fairy tale', 'Lông mi như trong cổ tích'),
-      t('Luxusná starostlivosť o vaše mihalnice', 'Luxury care for your lashes', 'Chăm sóc lông mi cao cấp'),
-      t('Dneska vám spravíme špecialitu', 'Today we have something special for you', 'Hôm nay chúng tôi có món đặc biệt cho bạn'),
-      t('Vaše oči si zaslúžia to najlepšie', 'Your eyes deserve the very best', 'Đôi mắt bạn xứng đáng điều tốt nhất'),
-      t('Jeden pohľad stačí', 'One look is all it takes', 'Chỉ một cái nhìn là đủ'),
-      t('Mihalnice, ktoré zvýraznia vašu krásu', 'Lashes that highlight your beauty', 'Lông mi tôn lên vẻ đẹp của bạn'),
+    hooks: [
+      t('oči, ktoré nepotrebujú filter', 'eyes that need no filter', 'đôi mắt không cần filter'),
+      t('mihalnice, ktoré neukážu', 'lashes that hide nothing', 'lông mi không giấu gì'),
+      t('doll eye, ale natural', 'doll eye but natural', 'doll eye nhưng tự nhiên'),
+      t('výraz, ktorý drží celý deň', 'a look that lasts all day', 'vẻ ngoài bền cả ngày'),
+      t('len sa mi otvorili oči', 'they opened my eyes', 'mở toang mắt tôi'),
+      t('mihalnice ako z reklámky', 'lashes from a fairytale', 'lông mi như trong truyện'),
+      t('bezbolestné, ale wow', 'painless, but wow', 'không đau, nhưng ấn tượng'),
+      t('cat eye energy', 'cat eye energy', 'vibe mắt mèo'),
+      t('prirodzene, ale výrazne', 'natural but bold', 'tự nhiên mà nổi bật'),
+      t('to som si dala spraviť', 'got these done', 'cái này tôi làm rồi nha'),
+      t('zrkadlo sa nemôže nemilovať', 'the mirror loves it', 'gương không thể không yêu'),
+      t('wow, len takto', 'wow, just like this', 'wow, đúng kiểu này'),
+      t('mihalnice z bavlny, ale takto', 'lashes from cotton, but like this', 'lông mi từ bông, nhưng thế này'),
+      t('raz a done', 'one and done', 'một lần là xong'),
+      t('dneska som iná osoba', 'a different person today', 'hôm nay tôi là người khác'),
+      t('mihalnice hovoria, nechajte ich', 'let the lashes do the talking', 'để lông mi nói thay'),
+      t('krajina, ktorá nepotrebuje pečiatku', 'a look that needs no stamp', 'vẻ ngoài không cần con dấu'),
+      t('volume, ktoré drží', 'volume that holds', 'volume giữ dáng'),
+      t('odlišujúci detail', 'the finishing detail', 'chi tiết phân biệt'),
+      t('dneska si zaslúžim', 'I deserve this today', 'hôm nay tôi xứng đáng'),
+      t('svieže, ľahké, prirodzené', 'fresh, light, natural', 'mới, nhẹ, tự nhiên'),
+      t('každé oko má svoje', 'every eye has its own', 'mỗi đôi mắt có kiểu riêng'),
+      t('mihalnice, ktoré sa páčia aj mne', 'lashes I actually like', 'lông mi tôi thực sự thích'),
+      t('toto musím povedať', 'had to share this', 'phải chia sẻ đi'),
+      t('trend, ktorý zostáva', 'a trend that stays', 'xu hướng bền lâu'),
+      t('môj každodenný upgrade', 'my daily upgrade', 'nâng cấp mỗi ngày'),
+      t('kde su tie mihalnice', 'where did those lashes go', 'mấy cái lông mi đó rồi'),
+      t('takto to chcem mať', 'this is what I want', 'tôi muốn thế này'),
+      t('pol hodiny, obrovský rozdiel', 'half an hour, huge difference', 'nửa tiếng, khác biệt lớn'),
+      t('spokojná, viac nechcem', 'happy, do not want more', 'hài lòng, không cần thêm'),
+      t('mihalnice, ktoré nechávajú stopy', 'lashes that leave an impression', 'lông mi để lại ấn tượng'),
+      t('každý deň iný vibe', 'a different vibe every day', 'mỗi ngày một vibe'),
+      t('menej je viac', 'less is more', 'ít hơn là nhiều hơn'),
+      t('niečo pre vás', 'something for you', 'một món cho các bạn'),
+      t('kto hovorí, že nie', 'who says no', 'ai nói không'),
+      t('krása začína tu', 'beauty starts here', 'vẻ đẹp bắt đầu từ đây'),
+      t('len jedna vec', 'just one thing', 'chỉ một điều'),
+      t('wow moment', 'a wow moment', 'khoảnh khắc ấn tượng'),
+      t('perfektný detail', 'the perfect detail', 'chi tiết hoàn hảo'),
+      t('nový obraz', 'new look, new energy', 'diện mạo mới'),
+      t('takto to vyzerá dobrý deň', 'this is what a good day looks like', 'đây là ngày đẹp'),
     ],
-    bodies: [
-      t('Odhaľte krásu vašich očí', 'Reveal the beauty of your eyes', 'Tôn lên vẻ đẹp đôi mắt bạn'),
-      t('Prirodzené predĺženie, ohromujúci výsledok', 'Natural-looking extension, stunning result', 'Kéo dài tự nhiên, kết quả ấn tượng'),
-      t('Mihalnice, ktoré si zamilujete', 'Lashes you will love', 'Lông mi bạn sẽ yêu thích'),
-      t('Každý pohľad je umelecké dielo', 'Every glance is a work of art', 'Mỗi cái nhìn là tác phẩm nghệ thuật'),
-      t('Minimalistická krása vašich očí', 'The minimalist beauty of your eyes', 'Vẻ đẹp tối giản của đôi mắt'),
-      t('Trendové štýly mihalníc', 'Trending lash styles', 'Xu hướng lông mi mới'),
-      t('Objem tam, kde je potrebný', 'Volume where it matters', 'Tạo volume đúng chỗ'),
-      t('Jemné vlny pre prirodzený look', 'Soft waves for a natural look', 'Sóng nhẹ cho look tự nhiên'),
-      t('Mihalnice pripravené na focenie', 'Lashes ready for the camera', 'Lông mi sẵn sàng chụp ảnh'),
-      t('Od rannej kávy po večernú párty', 'From morning coffee to evening cocktails', 'Từ cà phê sáng đến tiệc tối'),
-      t('Mihalnice, ktoré pretrvajú', 'Lashes that last', 'Lông mi bền lâu'),
-      t('Bezbolestná krása', 'Painless beauty', 'Vẻ đẹp không đau'),
-      t('Rýchle a efektívne', 'Quick and effective', 'Nhanh và hiệu quả'),
-      t('Výsledok, ktorý vidíte hneď', 'A result you see right away', 'Kết quả bạn thấy ngay'),
-      t('Starostlivosť, ktorá vidno na prvý pohľad', 'Care visible at first glance', 'Sự chăm sóc thấy ngay ở cái nhìn đầu tiên'),
-    ],
-    closers: [
-      t('Príďte si vybrať svoj štýl', 'Come and pick your style', 'Hãy đến chọn phong cách của bạn'),
-      t('Rezervujte si konzultáciu', 'Book a consultation', 'Hãy đặt lịch tư vấn'),
-      t('Tešíme sa na vás', 'We look forward to seeing you', 'Chúng tôi mong được gặp bạn'),
-      t('Vitaľame vás u nás', 'We would love to welcome you', 'Chúng tôi rất muốn đón bạn'),
-      t('Dohodnite si čas pre seba', 'Take a moment for yourself', 'Hẹn giờ cho chính bạn'),
-      t('Vaša spokojnosť je našou prioritou', 'Your satisfaction is our priority', 'Sự hài lòng của bạn là ưu tiên'),
-      t('Objednajte sa ešte dnes', 'Book today', 'Đặt lịch ngay hôm nay'),
-      t('Príďte a nechajte nás prekvapiť', 'Come and let us surprise you', 'Hãy đến và để chúng tôi làm bạn bất ngờ'),
+    tails: [
+      t('recept DM', 'DM for details', 'nhắn để xin chi tiết'),
+      t('objednajte si konzultáciu', 'book a consultation', 'đặt lịch tư vấn'),
+      t('koho zvoniem', 'who do I call', 'gọi ai đây'),
+      ...SHARED_TAILS,
     ],
   },
 };
@@ -257,19 +332,19 @@ export const CAPTION_SLOTS: Record<Category, SlotBank> = {
 export const HASHTAGS_LIBRARY: Record<Category, { en: string[]; sk: string[] }> = {
   nails: {
     en: ['#nails', '#nailart', '#manicure', '#beauty', '#naildesign', '#nailsofinstagram', '#nailstagram', '#nailswag', '#nailpolish', '#nailpro', '#nailjunkie', '#naildaily', '#nailaddict', '#nailstyle', '#glam', '#frenchtips', '#gelnails', '#shortnails', '#nailinspo', '#selfcare'],
-    sk: ['#nechty', '#manikura', '#lakovanie', '#krasa', '#salonkrasy', '#nechtyzmadrymi', '#krasanails', '#naildesignsk', '#slovaknails', '#slovenskakrasa', '#starostlivosť'],
+    sk: ['#nechty', '#manikura', '#lakovanie', '#krasa', '#salonkrasy', '#nechtyzmadrymi', '#krasanails', '#naildesignsk', '#slovaknails', '#slovenskakrasa', '#starostlivost'],
   },
   'hair-men': {
     en: ['#menshair', '#haircut', '#mensstyle', '#barber', '#fade', '#hairstyle', '#gentleman', '#barbershop', '#sharpcut', '#mensgrooming', '#beards', '#barberlife', '#undercut', '#buzzcut', '#malegrooming', '#menshaircut', '#fadehaircut', '#barberstyle', '#grooming', '#beardstyle'],
-    sk: ['#vlasy', '#panskystrih', '#kader', '#barberstrih', '#modnystrih', '#mužskýštýl', '#vlasytendencia', '#kvalitnystrih', '#stylmuža', '#krasavlasy'],
+    sk: ['#vlasy', '#panskystrih', '#kader', '#barberstrih', '#modnystrih', '#muzkystyl', '#vlasytendencia', '#kvalitnystrih', '#stylmuzа', '#krasavlasy'],
   },
   'hair-women': {
     en: ['#hair', '#hairstyle', '#hairgoals', '#haircut', '#balayage', '#haircolor', '#hairstylist', '#hairdo', '#hairlove', '#hairinspo', '#hairfashion', '#beautyhair', '#straighthair', '#curlyhair', '#longhair', '#hairtransformation', '#blowout', '#haircare', '#hairtrend', '#hairinspiration'],
-    sk: ['#vlasy', '#uces', '#krasa', '#salon', '#vlasovystrih', '#farbenievlasov', '#balayagesk', '#trendyucesy', '#hairgoals', '#ženskévlasy'],
+    sk: ['#vlasy', '#uces', '#krasa', '#salon', '#vlasovystrih', '#farbenievlasov', '#balayagesk', '#trendyucesy', '#hairgoals', '#zenskeevlasy'],
   },
   restaurant: {
     en: ['#foodie', '#foodporn', '#restaurant', '#yummy', '#instafood', '#foodstagram', '#foodlover', '#delicious', '#foodblogger', '#foodphotography', '#tasty', '#eeeeeats', '#foodgasm', '#dinner', '#lunch', '#gastronomy', '#hometaste', '#chefskiss', '#foodgoals', '#goodfood'],
-    sk: ['#jedlo', '#reštaurácia', '#chutna', '#varenie', '#domace', '#gastronomia', '#jedloupoľutí', '#slovenskájedlá', '#dobréjedlo', '#šéfkuchár'],
+    sk: ['#jedlo', '#restauracia', '#chutna', '#varenie', '#domace', '#gastronomia', '#jedloupoluti', '#slovenskejedla', '#dobrijedlo', '#chefkuchar'],
   },
   eyelash: {
     en: ['#lashes', '#eyelash', '#lashextensions', '#lashgoals', '#beauty', '#makeup', '#lashiie', '#lashed', '#eyelashes', '#lashartist', '#volumelashes', '#naturallashes', '#dramaticlashes', '#dramatic', '#wispy', '#lashlift', '#lashesforall', '#eyelashartist', '#lashqueen', '#flutter'],
@@ -278,47 +353,47 @@ export const HASHTAGS_LIBRARY: Record<Category, { en: string[]; sk: string[] }> 
 };
 
 /**
- * Trending topic bank. Topics rotate deterministically per day so the site
- * always feels "live" even without a backend API.
+ * Trending topic bank - short, punchy, currently popular styles.
+ * Rotated deterministically per day so the site always feels "live".
  */
 export const TRENDING_BANK: Record<Category, string[]> = {
-  nails: ['soft glam', 'chrome nails', 'french tips', 'minimalist', 'blush nails', 'buttercream nails', 'micro french', 'glazed donut', 'abstract art', 'mocha brown', 'short square', 'pearl detail', 'ombre', 'matte black'],
-  'hair-men': ['fade', 'textured crop', 'undercut', 'slick back', 'modern pompadour', 'mullet revival', 'buzz cut', 'curtain fringe', 'taper fade', 'beard sculpting', 'shaggy layers', 'short crop', 'comb over', 'surfer cut'],
-  'hair-women': ['wolf cut', 'balayage', 'curtain bangs', 'sleek bun', 'layers', 'bubble cut', 'honey blonde', 'shag cut', 'bixie cut', 'money piece', 'glass hair', 'beach waves', 'pixie cut', 'French bob'],
-  restaurant: ['comfort food', 'brunch', 'local ingredients', 'seasonal menu', 'farm to table', 'slow food', 'street food', 'chef special', 'daily menu', 'homemade', 'family recipes', 'tasting menu', 'good food good mood', 'food worth sharing'],
-  eyelash: ['cat eye', 'doll eye', 'wispy lashes', 'hybrid set', 'mega volume', 'cluster lashes', 'lash lift', 'spiky lashes', 'natural look', 'dramatic lashes', 'half lash', 'anime lashes', 'magnetic lashes', 'soft glam lashes'],
+  nails: ['soft glam', 'chrome nails', 'french tips', 'micro french', 'buttercream nails', 'blush nails', 'glazed donut', 'abstract art', 'mocha brown', 'short square', 'pearl detail', 'ombré', 'matte black', 'red theory'],
+  'hair-men': ['fade', 'textured crop', 'undercut', 'slick back', 'pompadour', 'mullet', 'buzz cut', 'curtain fringe', 'taper fade', 'beard sculpting', 'shaggy layers', 'short crop', 'surfer cut', 'buzz cut'],
+  'hair-women': ['wolf cut', 'balayage', 'curtain bangs', 'sleek bun', 'bixie cut', 'honey blonde', 'shag cut', 'money piece', 'glass hair', 'beach waves', 'pixie cut', 'French bob', 'bubble cut', 'layers'],
+  restaurant: ['comfort food', 'brunch', 'farm to table', 'seasonal menu', 'slow food', 'street food', 'chef special', 'homemade', 'family recipes', 'tasting menu', 'good food good mood', 'food worth sharing', 'daily menu', 'local ingredients'],
+  eyelash: ['cat eye', 'doll eye', 'wispy lashes', 'hybrid set', 'mega volume', 'cluster lashes', 'lash lift', 'spiky lashes', 'natural look', 'dramatic lashes', 'half lash', 'anime lashes', 'magnetic lashes', 'soft glam'],
 };
 
 /**
- * Day-of-week flavour. One caption of the day receives this prefix, which makes
- * each weekday feel distinct instead of generic.
+ * Short weekly flavour. Injected as a tiny tag-like prefix on one caption
+ * of the day, e.g. "monday mood ✨".
  */
 export const WEEKLY_THEMES: Record<number, LocalizedSlot> = {
-  0: t('Nový týžden, nové nápady', 'New week, new ideas', 'Tuần mới, ý tưởng mới'),
-  1: t('Pondelkový štart vo veľkom štýle', 'Monday start in big style', 'Khởi đầu thứ Hai với phong cách lớn'),
-  2: t('Utorok v znamení pohody', 'Tuesday all about comfort', 'Thứ Ba mang dấu ấn thoải mái'),
-  3: t('Streda, kedy si zaslúžite krásu', 'Wednesday, when you deserve beauty', 'Thứ Tư, ngày bạn xứng đáng được xinh đẹp'),
-  4: t('Piatok veľkých plánov', 'Friday and big plans', 'Thứ Sáu với những kế hoạch lớn'),
-  5: t('Víkend v znamení relaxu', 'Weekend in relaxation mode', 'Cuối tuần thư giãn'),
-  6: t('Nedeľa len pre seba', 'Sunday only for yourself', 'Chủ nhật chỉ dành cho bạn'),
+  0: t('nový týžden', 'new week', 'tuần mới'),
+  1: t('pondelková energia', 'monday mood', 'thứ hai rộn ràng'),
+  2: t('utorok vibe', 'tuesday vibe', 'thứ ba nhẹ nhàng'),
+  3: t('streda, pol týždňa', 'midweek', 'giữa tuần'),
+  4: t('piatok, big plans', 'friday plans', 'thứ sáu, kế hoạch lớn'),
+  5: t('víkendový režim', 'weekend mode', 'chế độ cuối tuần'),
+  6: t('nedeľa pre seba', 'sunday for me', 'chủ nhật cho mình'),
 };
 
 /**
- * Seasonal / month-based accents, appended as a light touch on one caption.
+ * Short seasonal accents, appended as a tiny suffix on one caption.
  */
 export const SEASONAL_ACCENTS: Record<number, LocalizedSlot> = {
-  0: t('Nový rok, nový štýl', 'New year, new style', 'Năm mới, phong cách mới'),
-  1: t('Valentínsky štýl', 'Valentine style', 'Phong cách Valentine'),
-  2: t('Jarné farby a nový štýl', 'Spring colours, new style', 'Màu xuân và phong cách mới'),
-  3: t('Veľkonočná elegance', 'Easter elegance', 'Vẻ đẹp Phục Sinh'),
-  4: t('Májová energia', 'May energy', 'Năng lượng tháng Năm'),
-  5: t('Letná pohoda', 'Summer ease', 'Không khí hè'),
-  6: t('Prázdninová svoboda', 'Holiday freedom', 'Tự do mùa hè'),
-  7: t('Slnečné leto', 'Sunny summer', 'Mùa hè nắng vàng'),
-  8: t('Zlatý jeseň', 'Golden autumn', 'Mùa thu vàng'),
-  9: t('Jesenná atmosféra', 'Autumn atmosphere', 'Không khí mùa thu'),
-  10: t('Tekutý jeseň', 'Liquid autumn', 'Mùa thu se'),
-  11: t('Sviatočné sviatky', 'Festive season', 'Mùa Giáng sinh'),
+  0: t('nový rok vibe', 'new year vibe', 'vibe năm mới'),
+  1: t('valentine mood', 'valentine mood', 'vibe Valentine'),
+  2: t('jaro je tu', 'spring is here', 'mùa xuân đến rồi'),
+  3: t('veľkonočná nálada', 'easter mood', 'không khí Phục Sinh'),
+  4: t('májová energia', 'may energy', 'năng lượng tháng Năm'),
+  5: t('letná pohoda', 'summer ease', 'không khí hè'),
+  6: t('prázdninová svoboda', 'holiday freedom', 'tự do mùa hè'),
+  7: t('slnečné leto', 'sunny summer', 'mùa hè nắng vàng'),
+  8: t('zlatý jeseň', 'golden autumn', 'mùa thu vàng'),
+  9: t('jesenná atmosféra', 'autumn mood', 'không khí mùa thu'),
+  10: t('tekutý jeseň', 'liquid autumn', 'mùa thu se'),
+  11: t('sviatky sú tu', 'festive season', 'mùa lễ hội'),
 };
 
 /** Icons per category, expanded for visual variety. */

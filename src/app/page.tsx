@@ -36,6 +36,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [layout, setLayout] = useState<LayoutMode>('grid');
   const [nonce, setNonce] = useState(0);
+  const [variant, setVariant] = useState(0);
 
   const { theme, toggle, mounted } = useTheme();
   const { toasts, show, dismiss } = useToast();
@@ -53,14 +54,16 @@ export default function Home() {
     setIsLoading(true);
     try {
       const history = loadHistory();
-      setByCategory(generateDailyCaptions({ date, history, persist: true }));
+      setByCategory(
+        generateDailyCaptions({ date, history, persist: true, variant })
+      );
     } catch (error) {
       console.error('Error generating captions:', error);
-      setByCategory(generateDailyCaptions({ date }));
+      setByCategory(generateDailyCaptions({ date, variant }));
     } finally {
       setIsLoading(false);
     }
-  }, [dateKey, date, nonce]);
+  }, [dateKey, date, nonce, variant]);
 
   const totalCaptions = useMemo(
     () =>
@@ -192,6 +195,18 @@ export default function Home() {
                 )}
               </div>
 
+              {/* Shuffle captions */}
+              <button
+                onClick={() => setVariant((v) => v + 1)}
+                title="Đổi bộ caption khác cho hôm nay"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-surface-2 px-2.5 py-2 text-[11.5px] font-bold text-fg-muted transition-all hover:border-line-strong hover:text-accent active:scale-95"
+              >
+                <Shuffle size={14} />
+                <span className="hidden sm:inline">
+                  {variant === 0 ? 'Đổi cap' : `Bộ ${variant + 1}`}
+                </span>
+              </button>
+
               {/* Layout toggle */}
               <div className="hidden rounded-xl border border-line bg-surface-2 p-0.5 sm:flex">
                 <button
@@ -249,14 +264,14 @@ export default function Home() {
               </div>
 
               <h2 className="font-display text-3xl font-black leading-[1.15] tracking-tight text-fg sm:text-[2.6rem]">
-                Caption mới mỗi ngày,{' '}
-                <span className="text-gradient">không bao giờ lặp lại</span>
+                Caption ngắn,{' '}
+                <span className="text-gradient">bắt trend</span>
               </h2>
 
               <p className="mt-2.5 text-[13.5px] leading-relaxed text-fg-muted">
-                3 caption tiếng Slovakia + 2 caption tiếng Anh cho mỗi danh mục.
-                Hệ thống tự đảm bảo không trùng trong 30 ngày liên tiếp, kèm
-                trending topic và bản dịch tiếng Việt.
+                Mỗi caption chỉ 1 dòng — đúng chuẩn đang chạy trên Instagram
+                và TikTok. 3 Slovak + 2 English cho mỗi danh mục, không trùng
+                trong 30 ngày, kèm trending word và bản dịch tiếng Việt.
               </p>
 
               {/* Action buttons */}

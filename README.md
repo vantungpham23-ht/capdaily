@@ -3,17 +3,34 @@
 Trình tạo caption hàng ngày cho 5 ngành: **nails**, **hair-men**, **hair-women**, **restaurant**, **eyelash**.
 Mỗi ngày mỗi category sinh **3 caption Slovak + 2 caption English**, kèm bản dịch tiếng Việt để đọc (không bị copy) và 5 hashtag.
 
-## Điểm nổi bật: không lặp lại trong 30 ngày
+## Caption ngắn, bắt trend
 
-Caption được ghép từ 3 slot độc lập — `opener` + `body` + `closer`:
+Caption được ghép từ 2 slot độc lập — `hook` + `tail`:
 
-| Category | openers × bodies × closers | Tổng biến thể / ngôn ngữ |
+```
+hook  +  tail  +  (season)  +  emoji
+```
+
+Mỗi caption chỉ **1 dòng, ~3-9 từ** — đúng format đang chạy trên Instagram / TikTok hiện nay.
+Ví dụ:
+
+```
+short & sweet pozrite sa 😍
+the cut that changes everything tag someone who needs this 🤍
+mihalnice, ktoré neukážu look at this ✨
+```
+
+Trend word (`chrome nails`, `wolf cut`, `soft glam`…) được hiển thị thành **chip vàng** và có thể bật/tắt khi copy.
+
+| Category | hooks × tails | Biến thể / ngôn ngữ |
 |---|---|---|
-| nails | 12 × 15 × 8 | 1.440 |
-| hair-men | 13 × 15 × 7 | 1.365 |
-| hair-women | 13 × 15 × 8 | 1.560 |
-| restaurant | 13 × 15 × 8 | 1.560 |
-| eyelash | 13 × 15 × 8 | 1.560 |
+| nails | 43 × 12 | 516 |
+| hair-men | 43 × 12 | 516 |
+| hair-women | 42 × 12 | 504 |
+| restaurant | 39 × 12 | 468 |
+| eyelash | 41 × 12 | 492 |
+
+## Điểm nổi bật: không lặp lại trong 30 ngày
 
 Cơ chế chọn caption có **3 lớp bảo đảm**, từ mạnh nhất đến dự phòng:
 
@@ -87,3 +104,11 @@ Cần bật **Settings → Pages → Source: GitHub Actions**.
 ```
 
 Bản dịch tiếng Việt chỉ hiển thị để đọc, **không bao giờ** được copy.
+
+Bấm vào chip trending vàng để bật/tắt trend khi copy:
+
+```
+<caption>  · chrome nails <emoji>
+
+#tag1 #tag2 #tag3 #tag4 #tag5
+```

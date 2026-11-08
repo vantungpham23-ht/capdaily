@@ -17,10 +17,10 @@ console.log('=== Candidate space per category/language ===');
 let smallest = Infinity;
 for (const cat of ALL_CATEGORIES) {
   const bank = CAPTION_SLOTS[cat];
-  const space = bank.openers.length * bank.bodies.length * bank.closers.length;
+  const space = bank.hooks.length * bank.tails.length;
   smallest = Math.min(smallest, space);
   console.log(
-    `  ${cat.padEnd(12)} openers=${bank.openers.length} bodies=${bank.bodies.length} closers=${bank.closers.length} -> ${space} combos/lang`
+    `  ${cat.padEnd(12)} hooks=${bank.hooks.length} tails=${bank.tails.length} -> ${space} combos/lang`
   );
 }
 console.log(`  => smallest pool: ${smallest} combos per language`);

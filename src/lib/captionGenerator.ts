@@ -124,57 +124,51 @@ interface Assembled {
   fingerprint: string;
 }
 
+/**
+ * Builds a short, trend-first caption.
+ *
+ * Structure:   hook [· tail] [· season] [· decor]
+ *
+ * The trend word is NOT glued into the sentence - it is exposed as a separate
+ * `trending` field so the UI can show it as a chip and the user can decide
+ * whether to include it. The caption itself stays readable.
+ *
+ * Everything is lower-case and compact on purpose - that is the format that
+ * currently performs on Instagram / TikTok.
+ */
 function assemble(
   category: Category,
   language: Language,
-  openerIdx: number,
-  bodyIdx: number,
-  closerIdx: number,
+  hookIdx: number,
+  tailIdx: number,
   opts: {
-    themePrefix?: { text: string; vi: string };
-    themeSuffix?: { text: string; vi: string };
-    trendSuffix?: { topic: string; lang: Language };
     decor?: string;
+    season?: { text: string; vi: string };
   }
 ): Assembled {
   const bank = CAPTION_SLOTS[category];
-  const opener = bank.openers[openerIdx];
-  const body = bank.bodies[bodyIdx];
-  const closer = bank.closers[closerIdx];
+  const hook = bank.hooks[hookIdx];
+  const tail = bank.tails[tailIdx];
 
   const parts: string[] = [];
   const viParts: string[] = [];
 
-  if (opts.themePrefix) {
-    parts.push(opts.themePrefix.text);
-    viParts.push(opts.themePrefix.vi);
-  }
+  parts.push(hook[language].text);
+  viParts.push(hook[language].vi);
 
-  parts.push(opener[language].text, body[language].text);
-  viParts.push(opener[language].vi, body[language].vi);
+  parts.push(tail[language].text);
+  viParts.push(tail[language].vi);
 
-  if (opts.trendSuffix) {
-    const topic = opts.trendSuffix.topic;
-    if (opts.trendSuffix.lang === 'sk') {
-      parts.push(`Trend: ${topic}`);
-      viParts.push(`Xu hướng: ${topic}`);
-    } else {
-      parts.push(`Trending: ${topic}`);
-      viParts.push(`Xu hướng: ${topic}`);
-    }
+  // The seasonal accent rides at the end, like a tag, so it never breaks
+  // the sentence in the middle.
+  if (opts.season) {
+    parts.push(opts.season.text);
+    viParts.push(opts.season.vi);
   }
 
   if (opts.decor) {
     parts.push(opts.decor);
     viParts.push(opts.decor);
-  }
-
-  parts.push(closer[language].text);
-  viParts.push(closer[language].vi);
-
-  if (opts.themeSuffix) {
-    parts.push(opts.themeSuffix.text);
-    viParts.push(opts.themeSuffix.vi);
   }
 
   const content = parts.join(' ');
@@ -183,7 +177,7 @@ function assemble(
   return {
     content,
     translation,
-    fingerprint: `${category}|${language}|${openerIdx}-${bodyIdx}-${closerIdx}`,
+    fingerprint: `${category}|${language}|${hookIdx}-${tailIdx}`,
   };
 }
 
@@ -204,6 +198,12 @@ export interface GenerateOptions {
   enPerCategory?: number;
   /** Receives the fingerprints of the generated captions (used for persistence / testing). */
   onFingerprints?: (fps: { key: string; category: Category; language: Language }[]) => void;
+  /**
+   * Alternative set for the same day. 0 = the daily set, 1..n = extra
+   * variants (used by the "shuffle" button so the user can pick another
+   * combination without changing the date).
+   */
+  variant?: number;
 }
 
 /**
@@ -224,6 +224,7 @@ export function generateDailyCaptions(
   const history = options.history ?? {};
   const usedInWindow = getUsedInWindow(history, date);
   const lastUsed = getLastUsedDates(history);
+  const variant = options.variant ?? 0;
 
   const skPerCategory = options.skPerCategory ?? 3;
   const enPerCategory = options.enPerCategory ?? 2;
@@ -242,8 +243,8 @@ export function generateDailyCaptions(
     const captions: Caption[] = [];
 
     const buildFor = (language: Language, take: number) => {
-      const keyOf = (c: { openerIdx: number; bodyIdx: number; closerIdx: number }) =>
-        `${category}|${language}|${c.openerIdx}-${c.bodyIdx}-${c.closerIdx}`;
+      const keyOf = (c: { hookIdx: number; tailIdx: number }) =>
+        `${category}|${language}|${c.hookIdx}-${c.tailIdx}`;
 
       // --- Layer 1: deterministic round-robin over a STABLE ordered list ---
       // The candidate space is shuffled ONCE with a fixed seed (so the order is
@@ -255,12 +256,10 @@ export function generateDailyCaptions(
       // Because the list is stable and `cycleDays * take <= list.length`, the
       // slices of a 30-day cycle never overlap -> zero repeats for 30 days,
       // completely independent of localStorage.
-      const candidates: { openerIdx: number; bodyIdx: number; closerIdx: number }[] = [];
-      bank.openers.forEach((_, oi) => {
-        bank.bodies.forEach((_, bi) => {
-          bank.closers.forEach((_, ci) => {
-            candidates.push({ openerIdx: oi, bodyIdx: bi, closerIdx: ci });
-          });
+      const candidates: { hookIdx: number; tailIdx: number }[] = [];
+      bank.hooks.forEach((_, hi) => {
+        bank.tails.forEach((_, ti) => {
+          candidates.push({ hookIdx: hi, tailIdx: ti });
         });
       });
 
@@ -272,11 +271,13 @@ export function generateDailyCaptions(
       // The cycle can be as long as the pool allows: cycleDays * take must fit
       // inside the stable list so the daily slices never overlap.
       const cycleDays = Math.max(30, Math.min(365, Math.floor(stableList.length / take)));
-      const slotStart = (daysSinceEpoch % cycleDays) * take;
+      // The variant shifts the starting slot so "shuffle" gives a different
+      // (but still deterministic) combination for the same day.
+      const slotStart = ((daysSinceEpoch + variant * 997) % cycleDays) * take;
 
       // Walk forward from the deterministic slot; skip anything the history
       // layer marks as recently used.
-      const isFresh = (c: { openerIdx: number; bodyIdx: number; closerIdx: number }) =>
+      const isFresh = (c: { hookIdx: number; tailIdx: number }) =>
         !usedInWindow.has(keyOf(c));
 
       const chosen: typeof candidates = [];
@@ -303,27 +304,28 @@ export function generateDailyCaptions(
         const trendTopics = getTrendingForDay(category, date, 3);
         const trend = trendTopics[index % trendTopics.length];
 
-        // Day-of-week theme on the first caption, seasonal accent on the second.
-        const themePrefix =
-          index === 0 && weeklyTheme
-            ? { text: weeklyTheme[language].text, vi: weeklyTheme[language].vi }
-            : undefined;
-
-        // Seasonal accent is appended as a separate line on the second caption.
-        const themeSuffix =
-          index === 1 && seasonal
-            ? { text: seasonal[language].text, vi: seasonal[language].vi }
-            : undefined;
+        // Weekly flavour on the first caption, seasonal accent on the second.
+        // Both are short so the caption stays snappy.
+        const week = index === 0 ? weeklyTheme : undefined;
+        const season = index === 1 ? seasonal : undefined;
 
         const decorRng = makeRng(hashString(`${dateKey}-${category}-${language}-${index}-decor`));
         const decor = pick(DECOR_EMOJIS, decorRng);
 
-        const assembled = assemble(category, language, c.openerIdx, c.bodyIdx, c.closerIdx, {
-          themePrefix,
-          themeSuffix,
-          trendSuffix: { topic: trend, lang: language },
+        const assembled = assemble(category, language, c.hookIdx, c.tailIdx, {
           decor,
+          season: season
+            ? { text: season[language].text, vi: season[language].vi }
+            : undefined,
         });
+
+        // The weekly flavour rides at the end so it reads like a tag.
+        const content = week
+          ? `${assembled.content} ${week[language].text}`
+          : assembled.content;
+        const translation = week
+          ? `${assembled.translation} ${week[language].vi}`
+          : assembled.translation;
 
         const iconBank = ICON_BANK[category];
         const icons = language === 'sk' ? iconBank.sk : iconBank.en;
@@ -337,8 +339,8 @@ export function generateDailyCaptions(
           id,
           category,
           language,
-          content: assembled.content,
-          translation: assembled.translation,
+          content,
+          translation,
           icon,
           hashtags: pickHashtags(category, language, hashtagSeed, 5),
           trending: trend,
@@ -346,7 +348,7 @@ export function generateDailyCaptions(
         });
 
         toRecord.push({
-          key: `${category}|${language}|${c.openerIdx}-${c.bodyIdx}-${c.closerIdx}`,
+          key: `${category}|${language}|${c.hookIdx}-${c.tailIdx}`,
           category,
           language,
         });
@@ -381,6 +383,17 @@ export function generateDailyCaptions(
 export function formatForCopy(caption: Caption): string {
   const hashtags = caption.hashtags.join(' ');
   return `${caption.content} ${caption.icon}\n\n${hashtags}`;
+}
+
+/**
+ * Same as `formatForCopy` but appends the trending topic as a trailing tag,
+ * e.g. "  · chrome nails". Useful when the user wants the trend word in the
+ * published post.
+ */
+export function formatForCopyWithTrend(caption: Caption): string {
+  const hashtags = caption.hashtags.join(' ');
+  const trend = caption.trending ? `  · ${caption.trending}` : '';
+  return `${caption.content}${trend} ${caption.icon}\n\n${hashtags}`;
 }
 
 /** Formats every caption of a category as one copyable block. */
