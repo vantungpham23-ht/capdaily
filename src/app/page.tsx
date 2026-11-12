@@ -269,9 +269,10 @@ export default function Home() {
               </h2>
 
               <p className="mt-2.5 text-[13.5px] leading-relaxed text-fg-muted">
-                Mỗi caption chỉ 1 dòng — đúng chuẩn đang chạy trên Instagram
-                và TikTok. 3 Slovak + 2 English cho mỗi danh mục, không trùng
-                trong 30 ngày, kèm trending word và bản dịch tiếng Việt.
+                Mỗi ngày 5 caption siêu ngắn (1–3 từ) + 2 caption dài đúng 1 câu
+                cho mỗi danh mục — ngắn gọn, đúng ngữ pháp bản xứ, bắt trend.
+                4 Slovak + 3 English, không trùng trong 30 ngày, kèm trending
+                word và bản dịch tiếng Việt.
               </p>
 
               {/* Action buttons */}

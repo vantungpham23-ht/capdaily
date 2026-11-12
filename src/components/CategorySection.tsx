@@ -91,6 +91,7 @@ export function CategorySection({
   onReorder,
 }: CategorySectionProps) {
   const [langFilter, setLangFilter] = useState<LangFilter>('all');
+  const [kindFilter, setKindFilter] = useState<'all' | 'short' | 'long'>('all');
   const [copiedAll, setCopiedAll] = useState(false);
   const { show } = useToast();
 
@@ -105,14 +106,18 @@ export function CategorySection({
 
   const visible = useMemo(
     () =>
-      langFilter === 'all'
-        ? captions
-        : captions.filter((c) => c.language === langFilter),
-    [captions, langFilter]
+      captions.filter(
+        (c) =>
+          (langFilter === 'all' || c.language === langFilter) &&
+          (kindFilter === 'all' || c.kind === kindFilter)
+      ),
+    [captions, langFilter, kindFilter]
   );
 
   const skCount = captions.filter((c) => c.language === 'sk').length;
   const enCount = captions.filter((c) => c.language === 'en').length;
+  const shortCount = captions.filter((c) => c.kind === 'short').length;
+  const longCount = captions.filter((c) => c.kind === 'long').length;
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -182,7 +187,7 @@ export function CategorySection({
       </header>
 
       {/* Toolbar */}
-      <div className="flex items-center gap-2 border-y border-line bg-surface-2/60 px-3 py-2">
+      <div className="flex flex-wrap items-center gap-2 border-y border-line bg-surface-2/60 px-3 py-2">
         <div className="flex rounded-lg bg-surface-3 p-0.5">
           {counts.map(({ key, label, n }) => (
             <button
@@ -198,6 +203,35 @@ export function CategorySection({
               <span
                 className={`text-[9.5px] tabular-nums ${
                   langFilter === key ? theme.text : 'text-fg-subtle'
+                }`}
+              >
+                {n}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <div className="flex rounded-lg bg-surface-3 p-0.5">
+          {(
+            [
+              { key: 'all', label: '5+2', n: captions.length },
+              { key: 'short', label: 'Ngắn', n: shortCount },
+              { key: 'long', label: 'Dài', n: longCount },
+            ] as const
+          ).map(({ key, label, n }) => (
+            <button
+              key={key}
+              onClick={() => setKindFilter(key)}
+              className={`flex items-center gap-1 rounded-[7px] px-2 py-1 text-[11px] font-semibold transition-all duration-200 ${
+                kindFilter === key
+                  ? 'bg-surface text-fg shadow-xs'
+                  : 'text-fg-muted hover:text-fg'
+              }`}
+            >
+              {label}
+              <span
+                className={`text-[9.5px] tabular-nums ${
+                  kindFilter === key ? theme.text : 'text-fg-subtle'
                 }`}
               >
                 {n}

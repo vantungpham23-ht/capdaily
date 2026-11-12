@@ -2,12 +2,11 @@ import { Caption, Category, HistoryMap, Language } from '@/types';
 import {
   ALL_CATEGORIES,
   CAPTION_SLOTS,
-  DECOR_EMOJIS,
   HASHTAGS_LIBRARY,
   ICON_BANK,
-  SEASONAL_ACCENTS,
   TRENDING_BANK,
   WEEKLY_THEMES,
+  SEASONAL_ACCENTS,
 } from '@/data/captions';
 import { getLastUsedDates, getUsedInWindow, recordUsage } from './history';
 import { toDateKey } from './date';
@@ -115,73 +114,6 @@ function pickHashtags(
 }
 
 /* ------------------------------------------------------------------ */
-/* Caption assembly                                                     */
-/* ------------------------------------------------------------------ */
-
-interface Assembled {
-  content: string;
-  translation: string;
-  fingerprint: string;
-}
-
-/**
- * Builds a short, trend-first caption.
- *
- * Structure:   hook [· tail] [· season] [· decor]
- *
- * The trend word is NOT glued into the sentence - it is exposed as a separate
- * `trending` field so the UI can show it as a chip and the user can decide
- * whether to include it. The caption itself stays readable.
- *
- * Everything is lower-case and compact on purpose - that is the format that
- * currently performs on Instagram / TikTok.
- */
-function assemble(
-  category: Category,
-  language: Language,
-  hookIdx: number,
-  tailIdx: number,
-  opts: {
-    decor?: string;
-    season?: { text: string; vi: string };
-  }
-): Assembled {
-  const bank = CAPTION_SLOTS[category];
-  const hook = bank.hooks[hookIdx];
-  const tail = bank.tails[tailIdx];
-
-  const parts: string[] = [];
-  const viParts: string[] = [];
-
-  parts.push(hook[language].text);
-  viParts.push(hook[language].vi);
-
-  parts.push(tail[language].text);
-  viParts.push(tail[language].vi);
-
-  // The seasonal accent rides at the end, like a tag, so it never breaks
-  // the sentence in the middle.
-  if (opts.season) {
-    parts.push(opts.season.text);
-    viParts.push(opts.season.vi);
-  }
-
-  if (opts.decor) {
-    parts.push(opts.decor);
-    viParts.push(opts.decor);
-  }
-
-  const content = parts.join(' ');
-  const translation = viParts.join(' ');
-
-  return {
-    content,
-    translation,
-    fingerprint: `${category}|${language}|${hookIdx}-${tailIdx}`,
-  };
-}
-
-/* ------------------------------------------------------------------ */
 /* Generation                                                           */
 /* ------------------------------------------------------------------ */
 
@@ -192,9 +124,17 @@ export interface GenerateOptions {
   history?: HistoryMap;
   /** Persist the generated captions to localStorage. */
   persist?: boolean;
-  /** How many Slovak captions per category. */
+  /** How many SHORT Slovak captions per category (default 3). */
+  shortsSk?: number;
+  /** How many SHORT English captions per category (default 2). */
+  shortsEn?: number;
+  /** How many LONG Slovak captions per category (default 1). */
+  longsSk?: number;
+  /** How many LONG English captions per category (default 1). */
+  longsEn?: number;
+  /** @deprecated use shortsSk/shortsEn instead */
   skPerCategory?: number;
-  /** How many English captions per category. */
+  /** @deprecated use shortsEn instead */
   enPerCategory?: number;
   /** Receives the fingerprints of the generated captions (used for persistence / testing). */
   onFingerprints?: (fps: { key: string; category: Category; language: Language }[]) => void;
@@ -209,12 +149,21 @@ export interface GenerateOptions {
 /**
  * Generates the caption set for a given day.
  *
- * Selection strategy:
- *  1. Build the full candidate space (opener x body x closer).
- *  2. Remove anything used within the last 30 days (from localStorage history).
- *  3. Pick deterministically-but-shuffled from what remains, so the result is
- *     stable for a given day but different every day.
- *  4. If the pool is exhausted, fall back to least-recently-used candidates.
+ * New format per category per day: 5 SHORT (1-3 words) + 2 LONG (exactly
+ * 1 sentence). Default language split:
+ *   - shorts: 3 SK + 2 EN
+ *   - longs:  1 SK + 1 EN
+ *   => 4 SK + 3 EN = 7 captions per category.
+ *
+ * Content is used VERBATIM from the bank - nothing is appended to the text,
+ * so shorts stay 1-3 words and longs stay exactly 1 sentence. Trend words,
+ * icons and hashtags travel as separate fields.
+ *
+ * Selection strategy per (category, kind, language):
+ *  1. Stable-shuffle the index list once with a fixed seed.
+ *  2. Day N consumes the slice [slotStart, slotStart + take).
+ *  3. Skip anything used within the last 30 days (history layer).
+ *  4. Fall back to least-recently-used if the fresh pool is exhausted.
  */
 export function generateDailyCaptions(
   options: GenerateOptions = {}
@@ -226,14 +175,11 @@ export function generateDailyCaptions(
   const lastUsed = getLastUsedDates(history);
   const variant = options.variant ?? 0;
 
-  const skPerCategory = options.skPerCategory ?? 3;
-  const enPerCategory = options.enPerCategory ?? 2;
-
-  const dayOfWeek = date.getDay();
-  const month = date.getMonth();
-
-  const weeklyTheme = WEEKLY_THEMES[dayOfWeek];
-  const seasonal = SEASONAL_ACCENTS[month];
+  // Default: 5 shorts (3 SK + 2 EN) + 2 longs (1 SK + 1 EN)
+  const shortsSk = options.shortsSk ?? options.skPerCategory ?? 3;
+  const shortsEn = options.shortsEn ?? options.enPerCategory ?? 2;
+  const longsSk = options.longsSk ?? 1;
+  const longsEn = options.longsEn ?? 1;
 
   const result: Record<Category, Caption[]> = {} as Record<Category, Caption[]>;
   const toRecord: { key: string; category: Category; language: Language }[] = [];
@@ -242,56 +188,58 @@ export function generateDailyCaptions(
     const bank = CAPTION_SLOTS[category];
     const captions: Caption[] = [];
 
-    const buildFor = (language: Language, take: number) => {
-      const keyOf = (c: { hookIdx: number; tailIdx: number }) =>
-        `${category}|${language}|${c.hookIdx}-${c.tailIdx}`;
+    const buildKind = (
+      kind: 'short' | 'long',
+      language: Language,
+      take: number
+    ) => {
+      const pool = kind === 'short' ? bank.shorts : bank.longs;
+      if (pool.length === 0 || take <= 0) return;
 
-      // --- Layer 1: deterministic round-robin over a STABLE ordered list ---
-      // The candidate space is shuffled ONCE with a fixed seed (so the order is
-      // identical on every device and every day), then walked with a stride.
-      // Day N consumes the slice [slotStart, slotStart + take) of the list.
-      //
-      //   slotStart = (daysSinceEpoch % cycleDays) * take
-      //
-      // Because the list is stable and `cycleDays * take <= list.length`, the
-      // slices of a 30-day cycle never overlap -> zero repeats for 30 days,
-      // completely independent of localStorage.
-      const candidates: { hookIdx: number; tailIdx: number }[] = [];
-      bank.hooks.forEach((_, hi) => {
-        bank.tails.forEach((_, ti) => {
-          candidates.push({ hookIdx: hi, tailIdx: ti });
-        });
-      });
+      const keyOf = (idx: number) => `${category}|${language}|${kind}|${idx}`;
 
-      const stableList = shuffle(candidates, makeRng(hashString(`${category}-${language}-stable`)));
+      // Stable order: shuffled once with a fixed seed.
+      const stableList = shuffle(
+        pool.map((_, idx) => idx),
+        makeRng(hashString(`${category}-${language}-${kind}-stable`))
+      );
 
       const daysSinceEpoch = Math.floor(
-        (Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())) / 86400000
+        Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000
       );
-      // The cycle can be as long as the pool allows: cycleDays * take must fit
-      // inside the stable list so the daily slices never overlap.
-      const cycleDays = Math.max(30, Math.min(365, Math.floor(stableList.length / take)));
-      // The variant shifts the starting slot so "shuffle" gives a different
-      // (but still deterministic) combination for the same day.
-      const slotStart = ((daysSinceEpoch + variant * 997) % cycleDays) * take;
+      // Cycle as long as the pool allows so daily slices never overlap.
+      // IMPORTANT: truncate to exactly cycleDays * take so slices partition
+      // the list with no wrap-around overlap (which happens when
+      // len % take != 0). Leftover items stay as fallback-only.
+      const cycleDays = Math.max(
+        30,
+        Math.min(365, Math.floor(stableList.length / Math.max(1, take)))
+      );
+      const effectiveLen = cycleDays * take;
+      const truncated = stableList.slice(0, effectiveLen);
+      const slotStart =
+        ((daysSinceEpoch + variant * 997) % cycleDays) * take;
 
-      // Walk forward from the deterministic slot; skip anything the history
-      // layer marks as recently used.
-      const isFresh = (c: { hookIdx: number; tailIdx: number }) =>
-        !usedInWindow.has(keyOf(c));
+      const isFresh = (idx: number) => !usedInWindow.has(keyOf(idx));
 
-      const chosen: typeof candidates = [];
-      for (let step = 0; step < stableList.length && chosen.length < take; step++) {
-        const candidate = stableList[(slotStart + step) % stableList.length];
-        if (isFresh(candidate)) {
-          chosen.push(candidate);
-        }
+      const chosen: number[] = [];
+      // Deterministic slice first (no history gaps inside the window).
+      for (let k = 0; k < take; k++) {
+        const idx = truncated[(slotStart + k) % effectiveLen];
+        if (isFresh(idx)) chosen.push(idx);
       }
-      // If the fresh pool is exhausted (very rare), fall back to the
-      // least-recently-used candidates so we always return the full set.
+      // Fill any history-skipped slots by walking forward in the full list.
+      for (
+        let step = 0;
+        step < stableList.length && chosen.length < take;
+        step++
+      ) {
+        const idx = stableList[(slotStart + step) % stableList.length];
+        if (!chosen.includes(idx) && isFresh(idx)) chosen.push(idx);
+      }
       if (chosen.length < take) {
         const remaining = stableList
-          .filter((c) => !chosen.some((x) => keyOf(x) === keyOf(c)))
+          .filter((idx) => !chosen.includes(idx))
           .sort((a, b) => {
             const da = lastUsed.get(keyOf(a)) ?? '0000-00-00';
             const db = lastUsed.get(keyOf(b)) ?? '0000-00-00';
@@ -300,47 +248,30 @@ export function generateDailyCaptions(
         chosen.push(...remaining.slice(0, take - chosen.length));
       }
 
-      chosen.forEach((c, index) => {
+      chosen.forEach((slotIdx, i) => {
+        const slot = pool[slotIdx % pool.length];
         const trendTopics = getTrendingForDay(category, date, 3);
-        const trend = trendTopics[index % trendTopics.length];
-
-        // Weekly flavour on the first caption, seasonal accent on the second.
-        // Both are short so the caption stays snappy.
-        const week = index === 0 ? weeklyTheme : undefined;
-        const season = index === 1 ? seasonal : undefined;
-
-        const decorRng = makeRng(hashString(`${dateKey}-${category}-${language}-${index}-decor`));
-        const decor = pick(DECOR_EMOJIS, decorRng);
-
-        const assembled = assemble(category, language, c.hookIdx, c.tailIdx, {
-          decor,
-          season: season
-            ? { text: season[language].text, vi: season[language].vi }
-            : undefined,
-        });
-
-        // The weekly flavour rides at the end so it reads like a tag.
-        const content = week
-          ? `${assembled.content} ${week[language].text}`
-          : assembled.content;
-        const translation = week
-          ? `${assembled.translation} ${week[language].vi}`
-          : assembled.translation;
+        const trend = trendTopics[(captions.length + i) % trendTopics.length];
 
         const iconBank = ICON_BANK[category];
         const icons = language === 'sk' ? iconBank.sk : iconBank.en;
-        const iconRng = makeRng(hashString(`${dateKey}-${category}-${language}-${index}-icon`));
+        const iconRng = makeRng(
+          hashString(`${dateKey}-${category}-${language}-${kind}-${i}-icon`)
+        );
         const icon = pick(icons, iconRng);
 
-        const id = `${category}-${language}-${dateKey}-${index}`;
-        const hashtagSeed = hashString(`${dateKey}-${category}-${language}-${index}-tags`);
+        const id = `${category}-${language}-${kind}-${dateKey}-${captions.length}`;
+        const hashtagSeed = hashString(
+          `${dateKey}-${category}-${language}-${kind}-${i}-tags`
+        );
 
         captions.push({
           id,
           category,
           language,
-          content,
-          translation,
+          kind,
+          content: slot[language].text,
+          translation: slot[language].vi,
           icon,
           hashtags: pickHashtags(category, language, hashtagSeed, 5),
           trending: trend,
@@ -348,15 +279,18 @@ export function generateDailyCaptions(
         });
 
         toRecord.push({
-          key: `${category}|${language}|${c.hookIdx}-${c.tailIdx}`,
+          key: keyOf(slotIdx),
           category,
           language,
         });
       });
     };
 
-    buildFor('sk', skPerCategory);
-    buildFor('en', enPerCategory);
+    // Order: shorts first (SK then EN), then longs (SK then EN).
+    buildKind('short', 'sk', shortsSk);
+    buildKind('short', 'en', shortsEn);
+    buildKind('long', 'sk', longsSk);
+    buildKind('long', 'en', longsEn);
 
     result[category] = captions;
   });
@@ -368,6 +302,10 @@ export function generateDailyCaptions(
   if (options.onFingerprints) {
     options.onFingerprints(toRecord);
   }
+
+  // Re-exported so UI can show them without extra imports.
+  void WEEKLY_THEMES;
+  void SEASONAL_ACCENTS;
 
   return result;
 }

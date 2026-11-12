@@ -40,6 +40,7 @@ export function CaptionCard({ caption, index }: CaptionCardProps) {
   };
 
   const langLabel = caption.language === 'sk' ? 'SK' : 'EN';
+  const kindLabel = caption.kind === 'short' ? '1–3 từ' : '1 câu';
 
   return (
     <div
@@ -75,6 +76,16 @@ export function CaptionCard({ caption, index }: CaptionCardProps) {
           >
             <Languages size={9} />
             {langLabel}
+          </span>
+
+          <span
+            className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-semibold tracking-wide ${
+              caption.kind === 'short'
+                ? 'bg-violet-500/12 text-violet-600 dark:text-violet-300'
+                : 'bg-amber-500/12 text-amber-600 dark:text-amber-300'
+            }`}
+          >
+            {kindLabel}
           </span>
 
           {caption.trending && (

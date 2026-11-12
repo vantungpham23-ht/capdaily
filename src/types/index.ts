@@ -5,6 +5,8 @@ export interface Caption {
   id: string;
   category: Category;
   language: Language;
+  /** 'short' = 1-3 words, 'long' = exactly one sentence */
+  kind: 'short' | 'long';
   content: string;
   translation: string; // Vietnamese translation
   icon: string;
